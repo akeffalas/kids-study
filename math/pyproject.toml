@@ -1,0 +1,193 @@
+[project]
+name = "hyrule-math-worksheet"
+version = "1.0.0"
+description = "Printable Grade 5 maths pre-test, built and quality-gated for greyscale print"
+requires-python = ">=3.14"
+dependencies = ["pypdf>=6"]
+
+[project.scripts]
+worksheet = "worksheet.__main__:main"
+
+[dependency-groups]
+dev = [
+    "import-linter>=2.15",
+    "pytest>=8",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.6",
+    "ty>=0.0.82",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["worksheet"]
+
+[tool.ruff]
+line-length = 90
+target-version = "py314"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+# The multiplication sign is deliberate: the display strings must match the
+# worksheet's own glyphs exactly, or the binding gate compares the wrong thing.
+allowed-confusables = ["×"]
+select = [
+    "F",    # pyflakes
+    "E", "W",   # pycodestyle
+    "I",    # import sorting
+    "N",    # pep8 naming
+    "D",    # docstrings
+    "UP",   # pyupgrade
+    "ANN",  # missing annotations
+    "S",    # flake8-bandit
+    "A",    # shadowing builtins
+    "B",    # bugbear
+    "C4",   # comprehensions
+    "DTZ",  # naive datetimes
+    "EM",   # exception messages
+    "ISC",  # implicit string concat
+    "PIE",
+    "PT",   # pytest style
+    "PTH",  # use pathlib
+    "RET",  # return simplification
+    "SIM",
+    "SLF",  # private member access
+    "TID",  # tidy imports
+    "ARG",  # unused arguments
+    "ERA",  # commented-out code
+    "PL",   # pylint
+    "TRY",  # exception antipatterns
+    "RUF",
+]
+ignore = [
+    "D203",   # conflicts with D211
+    "D213",   # conflicts with D212
+    "ANN401", # Any is occasionally the honest annotation
+    # TRY003 and the EM rules want every message moved into a custom exception
+    # class or hoisted to a local first. In a codebase this size that trades a
+    # readable raise site for boilerplate, and the messages here are written to
+    # be read by whoever broke the build.
+    "TRY003",
+    "EM101",
+    "EM102",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# The CLI's whole job is to talk to a terminal.
+"worksheet/__main__.py" = ["T20"]
+# Tests get names that read as sentences, and asserts are the point.
+"tests/*" = [
+    "D100", "D103", "S101", "ANN", "PLR2004", "SLF001", "S603", "S607",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.importlinter]
+root_package = "worksheet"
+# the forbidden contract names stdlib modules, so they must be graphed too
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "The CLI sits above the gates, which sit above the maths"
+type = "layers"
+layers = [
+    "worksheet.__main__",
+    "worksheet.audit : worksheet.render",
+    "worksheet.document",
+    "worksheet.stylesheet : worksheet.content",
+    "worksheet.colors : worksheet.spec : worksheet.numerals",
+]
+
+[[tool.importlinter.contracts]]
+name = "Measuring the document and producing it are unrelated jobs"
+type = "independence"
+modules = [
+    "worksheet.audit",
+    "worksheet.render",
+]
+
+[[tool.importlinter.contracts]]
+name = "The worksheet's maths knows nothing of how it is styled"
+type = "independence"
+modules = [
+    "worksheet.content",
+    "worksheet.stylesheet",
+]
+
+[[tool.importlinter.contracts]]
+name = "The quality contract is data, so it computes nothing"
+type = "independence"
+modules = [
+    "worksheet.colors",
+    "worksheet.spec",
+    "worksheet.numerals",
+]
+
+[[tool.importlinter.contracts]]
+name = "The domain layer touches no files, no processes and no PDFs"
+type = "forbidden"
+source_modules = [
+    "worksheet.colors",
+    "worksheet.spec",
+    "worksheet.numerals",
+    "worksheet.content",
+]
+forbidden_modules = [
+    "subprocess",
+    "pathlib",
+    "pypdf",
+    "worksheet.audit",
+    "worksheet.render",
+    "worksheet.document",
+    "worksheet.stylesheet",
+]
+
+[tool.ty.environment]
+# The oldest version the project supports, which is also what CI installs.
+# "all" leaves sys.platform unspecialised: the Chrome lookup has macOS paths
+# and a Linux fallback, and CI runs Linux.
+python-version = "3.14"
+python-platform = "all"
+
+[tool.ty.terminal]
+# A warning nobody reads is noise. Make them all fail.
+error-on-warning = true
+
+[tool.ty.rules]
+# Rules ty leaves off by default that are worth having here. Each catches a
+# class of bug rather than a style preference.
+possibly-unresolved-reference = "error"  # a name that may be unbound on some path
+possibly-missing-attribute = "error"
+possibly-missing-import = "error"
+division-by-zero = "error"
+missing-type-argument = "error"          # bare `list` where `list[str]` is meant
+unsound-assignment = "error"
+unsound-return-statement = "error"
+disjoint-cast = "error"                  # a cast that can never succeed
+redundant-condition-strict = "error"
+missing-direct-dependency = "error"      # importing what pyproject never declared
+blanket-ignore-comment = "error"         # `# ty: ignore` must name its rule
+
+[tool.coverage.run]
+source = ["worksheet"]
+# Branch coverage, not just line coverage: a line can be executed without every
+# path through it being taken, and the guard clauses here are the whole point.
+branch = true
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+exclude_also = [
+    # `raise SystemExit(main())` and similar: executed by the CLI, not by tests.
+    'if __name__ == .__main__.:',
+]
