@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          # matches .python-version and requires-python
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Formatting
+        run: uv run ruff format --check .
+
+      - name: Types
+        run: uv run ty check --output-format github
+
+      - name: Architecture
+        run: uv run lint-imports
+
+      - name: Test
+        # The render and pixel tests skip here by design. They need Chrome and
+        # ImageMagick, and the reference images carry macOS font metrics, so a
+        # Linux runner would fail on those rather than on a real regression.
+        # The correctness, contrast, token and binding gates run on the HTML
+        # alone and cover any change to the maths, stylesheet or palette.
+        run: uv run pytest -v
+
+      - name: Coverage
+        # fail_under = 90 lives in pyproject, so this gates rather than reports
+        run: uv run pytest --cov
