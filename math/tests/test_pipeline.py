@@ -14,7 +14,7 @@ from worksheet.audit import Status, audit
 from worksheet.render import BUNDLE_PATHS, render_pdf
 from worksheet.spec import EXPECTED_PAGES
 
-SOURCE = Path(__file__).resolve().parent.parent / "hyrule-math-review.html"
+SOURCE = Path(__file__).resolve().parent.parent / "chapter-1" / "hyrule-math-review.html"
 
 needs_chrome = pytest.mark.skipif(
     not (

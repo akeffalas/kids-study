@@ -31,8 +31,8 @@ import pytest
 from worksheet.render import ChromeNotFoundError, find_chrome, render_pdf
 from worksheet.spec import EXPECTED_PAGES
 
-SOURCE = Path(__file__).resolve().parent.parent / "hyrule-math-review.html"
-REFERENCE = Path(__file__).parent / "reference"
+SOURCE = Path(__file__).resolve().parent.parent / "chapter-1" / "hyrule-math-review.html"
+REFERENCE = Path(__file__).resolve().parent.parent / "chapter-1" / "reference"
 UPDATING = os.environ.get("UPDATE_REFERENCE") == "1"
 
 # Chrome's antialiasing varies slightly between runs of identical input, so an

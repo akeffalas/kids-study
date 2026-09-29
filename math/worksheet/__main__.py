@@ -8,8 +8,8 @@ from .audit import Report, Status, audit
 from .render import ChromeNotFoundError, RenderError, render_pdf
 from .stylesheet import StylesheetError
 
-DEFAULT_SOURCE = Path("hyrule-math-review.html")
-DEFAULT_OUTPUT = Path("Hyrule-Math-Quest.pdf")
+DEFAULT_SOURCE = Path("chapter-1/hyrule-math-review.html")
+DEFAULT_OUTPUT = Path("chapter-1/Hyrule-Math-Quest.pdf")
 
 MARK = {Status.PASS: "ok  ", Status.FAIL: "FAIL"}
 
