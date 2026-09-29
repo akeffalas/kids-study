@@ -6,7 +6,7 @@ import pytest
 
 from worksheet.__main__ import EXIT_BAD_INPUT, EXIT_GATE_FAILED, EXIT_OK, main
 
-SOURCE = Path(__file__).resolve().parent.parent / "hyrule-math-review.html"
+SOURCE = Path(__file__).resolve().parent.parent / "chapter-1" / "hyrule-math-review.html"
 NO_PDF = "does-not-exist.pdf"
 
 

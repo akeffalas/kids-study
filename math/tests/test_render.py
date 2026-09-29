@@ -18,7 +18,7 @@ from worksheet.render import (
     render_pdf,
 )
 
-SOURCE = Path(__file__).resolve().parent.parent / "hyrule-math-review.html"
+SOURCE = Path(__file__).resolve().parent.parent / "chapter-1" / "hyrule-math-review.html"
 FAKE_CHROME = Path("/bin/chrome")
 
 

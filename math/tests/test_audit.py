@@ -12,7 +12,7 @@ from worksheet.audit import Status, audit
 from worksheet.content import ANSWERS, GIVENS, IDENTITIES
 from worksheet.spec import ARTWORK_CHECKS, CONTRAST_CHECKS
 
-SOURCE = Path(__file__).resolve().parent.parent / "hyrule-math-review.html"
+SOURCE = Path(__file__).resolve().parent.parent / "chapter-1" / "hyrule-math-review.html"
 TOKEN_GATES = 2
 
 

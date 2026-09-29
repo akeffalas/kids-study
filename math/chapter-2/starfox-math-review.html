@@ -1,0 +1,608 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Star Fox Math Mission</title>
+<style>
+  /* ============================================================
+     DESIGN TOKENS - every rule below resolves to these.
+     Token names are shared with the Hyrule worksheet so the same
+     print contract (worksheet/spec.py) applies here unchanged.
+     Illustration SVGs keep their own literal colors.
+     ============================================================ */
+  :root {
+    /* type ramp - 6 steps */
+    --t-xs: 11px; --t-sm: 13px; --t-md: 15px;
+    --t-lg: 18px; --t-xl: 22px; --t-display: 28px;
+    /* spacing scale - 5 steps */
+    --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px; --s5: 32px;
+    /* stroke weights - 3 steps */
+    --k1: 2px; --k2: 3px; --k3: 4px;
+    /* grid: 12 cols over a 675px body column. prose 10, data 12. */
+    --w-prose: 563px; --w-data: 675px;
+    /* color - 13 tokens */
+    --ink:     #1B2A41;  /* body text             */
+    --ink2:    #4A5A72;  /* secondary / italic    */
+    --title:   #16325C;  /* headings, badges      */
+    --label:   #2B568F;  /* sub-labels, arrows    */
+    --rule:    #6A7F9E;  /* dotted rules, boxes   */
+    --gold:    #3B6FC4;  /* container borders     */
+    --gold-hi: #F5A623;  /* accents, badge ring   */
+    --green:   #0F6E5C;  /* MATH VALUES ONLY      */
+    --red:     #A8321A;  /* directives            */
+    --paper1:  #F2F6FC;  /* banner gradient start */
+    --paper2:  #DCE6F5;  /* banner gradient end   */
+    --paper3:  #F8FBFF;  /* tinted fill           */
+    --tint:    #FFF8EC;  /* mission wash          */
+  }
+
+  @page { size: letter; margin: 0.38in 0.5in; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Chalkboard SE", "Comic Sans MS", "Marker Felt", sans-serif;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .num { font-family: "Avenir Next", "Helvetica Neue", Helvetica, sans-serif;
+         font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  /* ---------- page 1 banner ---------- */
+  .banner {
+    position: relative; border: 5px solid var(--gold); border-radius: 18px;
+    background: linear-gradient(135deg,var(--paper1) 0%, var(--paper2) 100%);
+    padding: var(--s3) 176px var(--s3) 124px; margin-bottom: var(--s3);
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .banner h1 { margin: 0 0 var(--s1); font-size: var(--t-display); color: var(--title);
+               line-height: 1.12; }
+  .banner .sub { font-size: var(--t-sm); color: var(--ink2); margin: 0 0 var(--s3); }
+  .banner .tri { position: absolute; left: var(--s3); top: var(--s3);
+                 width: 96px; height: 80px; }
+  .banner .shd { position: absolute; right: var(--s3); top: 50%;
+                 transform: translateY(-50%); width: 70px; height: 66px; }
+  .fields { display: flex; gap: var(--s4); font-size: var(--t-sm); color: var(--ink2);
+            max-width: var(--w-prose); }
+  .fields div { display: flex; align-items: baseline; gap: var(--s2); }
+  .fields div:first-child { flex: 1; }
+  .fields span { flex: 1; border-bottom: 2.5px dotted var(--rule); min-width: 90px; }
+  .fields div:last-child span { min-width: 104px; }
+  /* score patch: a round mission badge between the title and the planet */
+  .banner .score { position: absolute; right: 94px; top: 50%; transform: translateY(-50%);
+                   width: 84px; height: 84px; border-radius: 50%;
+                   border: var(--k2) solid var(--gold); background: #fff;
+                   display: flex; flex-direction: column; align-items: center;
+                   justify-content: center; font-size: var(--t-xs); color: var(--ink2); }
+  .banner .score .num { font-size: var(--t-md); color: var(--title); }
+  .banner .score span { display: inline-block; width: 42px; height: 20px;
+                        border-bottom: 2.5px dotted var(--rule); }
+
+  /* ---------- running header ---------- */
+  .mini { display: flex; align-items: center; gap: var(--s3);
+          border: var(--k3) solid var(--gold); border-radius: 15px;
+          background: linear-gradient(135deg,var(--paper1) 0%, var(--paper2) 100%);
+          padding: var(--s2) var(--s3); margin-bottom: var(--s3); }
+  .mini h1 { margin: 0; font-size: var(--t-lg); color: var(--title); }
+  .mini .pg { margin-left: auto; font-size: var(--t-sm); color: var(--ink2);
+              font-style: italic; }
+  .mini .mname { font-size: var(--t-sm); color: var(--ink2); white-space: nowrap; }
+  .mini .mname span { display: inline-block; border-bottom: 2.5px dotted var(--rule);
+                      min-width: 128px; }
+  .mini svg { flex: 0 0 auto; }
+
+  /* ---------- problem shell ---------- */
+  .p { display: flex; gap: var(--s3); margin-bottom: var(--s3);
+       page-break-inside: avoid; }
+  .badge { flex: 0 0 33px; height: 33px; border-radius: 50%; background: var(--title);
+           color: #fff; font-size: var(--t-lg); font-weight: 700; display: flex;
+           align-items: center; justify-content: center;
+           border: var(--k2) solid var(--gold-hi); }
+  .body { flex: 1; padding-top: 1px; }
+  .q { font-size: var(--t-md); line-height: 1.45; margin: 0; max-width: var(--w-prose); }
+  .q .big { font-size: var(--t-xl); color: var(--green); }
+  .q .val { color: var(--green); }
+  /* underlined so a directive still stands out when printed in greyscale */
+  .ask { color: var(--red); font-weight: 700; text-decoration: underline;
+         text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+  /* keeps a run of values together so a line never breaks inside it */
+  .grp { white-space: nowrap; }
+
+  /* sub-questions: one per line, labels in a fixed gutter */
+  /* baseline, not stretch - otherwise the a./b./c. labels ride high */
+  .sub2 { display: flex; align-items: baseline; gap: var(--s2); font-size: var(--t-md);
+          margin: var(--s2) 0 0; max-width: var(--w-prose); line-height: 1.5; }
+  .sub2 .lbl { flex: 0 0 15px; color: var(--label); font-weight: 700; }
+  .sub2 .txt { flex: 1; }
+  .note2 { font-size: var(--t-sm); margin: var(--s2) 0 0; max-width: var(--w-prose);
+           line-height: 1.5; }
+
+  /* AFFORDANCE 1 - rule, for words and sentences */
+  .blank { display: inline-block; border-bottom: 2.5px dotted var(--rule);
+           min-width: 140px; height: var(--s4); vertical-align: -3px; }
+  .blank.s { min-width: 58px; }
+  .blank.w { min-width: 190px; }
+  .line { border-bottom: 2.5px dotted var(--rule); height: var(--s5);
+          max-width: var(--w-data); }
+
+  /* AFFORDANCE 2 - box, for a single short value. 34px clears a child's pencil. */
+  .bx { display: inline-block; height: 34px; min-width: 74px;
+        border: 2.5px dotted var(--rule); border-radius: 9px; background: #fff;
+        vertical-align: -11px; margin: 0 var(--s1); }
+  .bx.sm { min-width: 46px; }
+  .bx.lg { min-width: 100px; margin: 0; }
+  .bx.tall { height: 44px; min-width: 150px; margin: 0; }
+
+  /* ---------- table: shares the prose column exactly ---------- */
+  table { border-collapse: collapse; margin: var(--s2) 0 0;
+          width: var(--w-prose); table-layout: fixed; }
+  th, td { border: 2.5px solid var(--ink2); padding: var(--s2) var(--s3);
+           font-size: var(--t-lg); text-align: center; letter-spacing: 1px;
+           color: var(--green); height: 38px; }
+  /* tinted, not solid dark - a filled bar is the thirstiest element on a mono laser */
+  th { background: var(--paper2); color: var(--title); font-size: var(--t-sm);
+       letter-spacing: 0; height: auto; border-bottom-width: 4px; }
+  td.fill { background: var(--paper3); }
+
+  /* ---------- card: ONE component for every grouped-value container ---------- */
+  .cardrow { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+             margin-top: var(--s3); max-width: var(--w-data); }
+  .card { display: flex; align-items: center; gap: var(--s1);
+          border: var(--k2) solid var(--rule); border-radius: 12px; background: #fff;
+          padding: var(--s2) var(--s3); font-size: var(--t-lg); color: var(--green); }
+  .card.big { font-size: var(--t-xl); padding: var(--s2) var(--s4); }
+  /* smaller type centres high against the digits, so drop it onto their baseline */
+  .card .lbl { font-size: var(--t-md); color: var(--label); margin-right: var(--s1);
+               position: relative; top: 2px; }
+  .card .bx { margin-top: 0; margin-bottom: 0; vertical-align: middle; }
+  /* an equation of equal answer boxes, indented under its a./b. label */
+  .est { display: flex; align-items: center; gap: var(--s2); margin: var(--s2) 0 0 23px;
+         font-size: var(--t-lg); color: var(--green); }
+  .cardrow.grid2 { display: grid; grid-template-columns: 1fr 1fr; max-width: var(--w-data); }
+  .cardrow.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; max-width: var(--w-data); }
+  .grid3 .card { justify-content: center; }
+  /* 4. "= box" pinned right, so the answers form one column down the grid */
+  .card .eq { margin-left: auto; display: flex; align-items: center; gap: var(--s1); }
+  .amp { font-size: var(--t-sm); color: var(--ink2); font-style: italic; }
+
+  /* ---------- properties ---------- */
+  .bank { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center;
+          margin: var(--s2) 0 var(--s1); max-width: var(--w-data); }
+  .bank .bl { font-size: var(--t-sm); color: var(--ink2); font-style: italic; }
+  .bank .chip { border: 2.5px solid var(--rule); border-radius: 999px;
+                background: var(--paper3); padding: var(--s1) var(--s3);
+                font-size: var(--t-sm); color: var(--ink); font-weight: 700; }
+  .props { max-width: var(--w-data); }
+  .props .pr { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s2); }
+  .props .pr .lbl { flex: 0 0 15px; font-size: var(--t-sm); color: var(--label);
+                    font-weight: 700; }
+  /* right-aligned so every equation ends the same distance from its rule */
+  /* set on the = sign: left side right-aligned, right side left-aligned */
+  .props .pr .eqn { flex: 0 0 360px; font-size: var(--t-lg); color: var(--green);
+                    display: flex; gap: var(--s2); }
+  .props .pr .eqn .lhs { flex: 0 0 132px; text-align: right; }
+  .props .pr .eqn .rhs { flex: 1; }
+  .props .pr .nm { flex: 1; border-bottom: 2.5px dotted var(--rule); height: 26px; }
+
+  /* ---------- work areas ---------- */
+  .pad { border: 2.5px dashed var(--rule); border-radius: 11px; background: #fff;
+         position: relative; }
+  .pad span { position: absolute; top: var(--s1); left: var(--s3); font-size: var(--t-xs);
+              color: var(--ink2); font-style: italic; }
+  .work { display: flex; gap: var(--s3); align-items: stretch; margin-top: var(--s2);
+          max-width: var(--w-data); }
+  .work .pad { flex: 1; height: 230px; }
+  .work.sm .pad { height: 116px; }
+  .work.md .pad { height: 160px; }
+  .work.lg .pad { height: 196px; }
+  .work.xl .pad { height: 290px; }
+  /* answer box level with the bottom of the pad, where the working ends */
+  .work .ansbox { flex: 0 0 176px; display: flex; flex-direction: column;
+                  justify-content: flex-end; }
+  .work .ansbox .lab { font-size: var(--t-sm); color: var(--ink2); font-weight: 700;
+                       margin-bottom: var(--s1); }
+  /* solid green = the ONE final-answer treatment, used once in the document */
+  .fin { border: var(--k2) solid var(--green); border-radius: 10px; background: #fff;
+         height: 44px; }
+
+  .pad .plbl { font-size: var(--t-md); font-style: normal; font-weight: 700;
+               color: var(--label); }
+
+  /* two short problems side by side, each with its own pad */
+  .pair { display: flex; gap: var(--s3); margin-top: var(--s2); max-width: var(--w-data); }
+  .pair .work { flex: 1; margin-top: 0; }
+  .pair .work .ansbox { flex: 0 0 110px; }
+  .pair .bx.tall { min-width: 110px; }
+  /* taller than .sm elsewhere: a carry row above the problem and a full answer row below,
+     with the problem shifted right so the a./b. label never sits in the carry row */
+  .pair .work.sm .pad { height: 150px; }
+  .pair .stack { top: 32px; left: 48px; }
+
+  /* a problem written in columns, the way the student will work it */
+  .stack { position: absolute; top: var(--s4); left: var(--s4); text-align: right;
+           font-size: var(--t-xl); color: var(--green); line-height: 1.3; }
+  .stack .op { border-bottom: var(--k2) solid var(--ink); padding-left: var(--s4); }
+
+  /* ---------- word problem ---------- */
+  .quest { border: var(--k3) solid var(--gold); border-radius: 16px; background: var(--tint);
+           padding: var(--s3); page-break-inside: avoid; }
+  .quest .qh { display: flex; align-items: center; gap: var(--s2); margin: 0 0 var(--s2); }
+  .quest h2 { margin: 0; font-size: var(--t-lg); color: var(--title); }
+  .quest .q, .quest .work { max-width: none; }
+  .ing { display: flex; gap: var(--s2); margin: var(--s3) 0 0; }
+  .ing > div { flex: 1; border: 2.5px solid var(--rule); border-radius: 10px; background: #fff;
+             padding: var(--s2) var(--s1); text-align: center; }
+  .ing .nm2 { font-size: var(--t-xs); color: var(--ink2); line-height: 1.15; height: 28px;
+              display: flex; align-items: center; justify-content: center; }
+  .ing .v { font-size: var(--t-md); color: var(--green); margin-top: var(--s1); }
+
+  .work .ansbox.steps4 { flex: 0 0 290px; gap: var(--s2); justify-content: space-between; }
+  .steps4 .row { display: flex; align-items: center; gap: var(--s2); }
+  .steps4 .row .lab { flex: 1; margin: 0; }
+  .steps4 .row .bx { flex: 0 0 110px; margin: 0; }
+  .steps4 .row .fin { flex: 0 0 110px; }
+
+  .footer { margin-top: var(--s3); text-align: center; font-size: var(--t-sm);
+            color: var(--ink2); }
+
+  /* ---------- answer key ---------- */
+  .key h1 { font-size: var(--t-lg); color: var(--title); margin: 0; }
+  .keybox { border: var(--k2) solid var(--gold); border-radius: 16px;
+            background: var(--paper3); padding: var(--s2) var(--s4) var(--s3); }
+  .key ol { font-size: var(--t-sm); line-height: 1.5; padding-left: var(--s4); margin: 0; }
+  .key ol > li { margin-bottom: var(--s2); }
+  .key .a { color: var(--green); font-weight: 700; }
+  .key .why { color: var(--ink2); font-size: var(--t-sm); font-style: italic; }
+  /* worked steps sit quieter than the answers they support */
+  .key .why.num { font-weight: 400; font-style: normal; }
+  .key ul { margin: 2px 0 var(--s1); padding-left: var(--s3); font-size: var(--t-sm);
+            line-height: 1.45; list-style: none; }
+  /* 9. where to go back in the textbook when a question is missed */
+  .key .ref { color: var(--label); font-size: var(--t-xs); font-weight: 700;
+              margin-left: var(--s2); }
+</style></head>
+<body>
+
+<!-- ============================ PAGE 1 ============================ -->
+<div class="page">
+
+<div class="banner">
+  <!-- Arwing, top view: pointed fuselage, swept wings, blue wingtip fins -->
+  <svg class="tri" viewBox="0 0 200 160" aria-label="Arwing">
+    <g stroke="#2A3445" stroke-width="3.3" stroke-linejoin="round">
+      <path d="M92,74 L14,128 L24,140 L96,106 Z" fill="#D9DEE6"/>
+      <path d="M108,74 L186,128 L176,140 L104,106 Z" fill="#D9DEE6"/>
+      <path d="M14,128 L4,90 L14,88 L30,124 Z" fill="#3B6FC4"/>
+      <path d="M186,128 L196,90 L186,88 L170,124 Z" fill="#3B6FC4"/>
+      <path d="M100,6 L116,108 L100,128 L84,108 Z" fill="#EEF1F5"/>
+      <ellipse cx="100" cy="62" rx="7" ry="16" fill="#6FC6E8"/>
+      <circle cx="100" cy="136" r="8" fill="#F5A623"/>
+    </g>
+  </svg>
+
+  <!-- Corneria with its ring, and two stars -->
+  <svg class="shd" viewBox="0 0 200 190" aria-label="Planet Corneria">
+    <g stroke="#2A3445" stroke-width="4" stroke-linejoin="round">
+      <circle cx="104" cy="104" r="58" fill="#6FA8DC"/>
+      <path d="M70,82 C84,70 104,78 100,94 C96,108 76,104 70,82 Z" fill="#5FB36B"/>
+      <path d="M112,118 C128,108 146,118 140,134 C132,146 114,138 112,118 Z" fill="#5FB36B"/>
+      <ellipse cx="104" cy="104" rx="96" ry="22" fill="none" stroke="#2A3445"
+               stroke-width="4" transform="rotate(-18 104 104)"/>
+      <path d="M30,18 L35,33 L50,38 L35,43 L30,58 L25,43 L10,38 L25,33 Z" fill="#F5A623"/>
+      <path d="M176,150 L179,160 L189,163 L179,166 L176,176 L173,166 L163,163 L173,160 Z"
+            fill="#F5A623"/>
+    </g>
+  </svg>
+
+  <h1>Star Fox Math Mission</h1>
+  <p class="sub">Grade 5 Chapter 2 Review &#9679; Multiplication</p>
+  <div class="fields">
+    <div>Pilot's Name: <span></span></div>
+    <div>Date: <span></span></div>
+  </div>
+  <div class="score">Missions<div class="num"><span></span>/10</div></div>
+</div>
+
+<div class="p"><div class="badge">1</div><div class="body">
+  <p class="q">ROB's flight log is missing some factors.
+     <span class="ask">Fill in each missing factor.</span></p>
+  <div class="cardrow grid3 num">
+    <div class="card"><span class="lbl">a.</span>7 &times; <span class="bx sm"></span> = 56</div>
+    <div class="card"><span class="lbl">b.</span><span class="bx sm"></span> &times; 9 = 63</div>
+    <div class="card"><span class="lbl">c.</span>25 &times; <span class="bx sm"></span> = 25</div>
+  </div>
+</div></div>
+
+<div class="p"><div class="badge">2</div><div class="body">
+  <p class="q">Peppy's flight rules.
+     <span class="ask">Name the multiplication property each one shows.</span></p>
+  <div class="bank">
+    <span class="bl">Word bank:</span>
+    <span class="chip">Commutative</span>
+    <span class="chip">Associative</span>
+    <span class="chip">Distributive</span>
+    <span class="chip">Identity</span>
+    <span class="chip">Zero</span>
+  </div>
+  <div class="props">
+    <div class="pr"><span class="lbl">a.</span>
+      <span class="eqn num"><span class="lhs">38 &times; 6</span>=<span class="rhs">6 &times; 38</span></span>
+      <span class="nm"></span></div>
+    <div class="pr"><span class="lbl">b.</span>
+      <span class="eqn num"><span class="lhs">243 &times; 0</span>=<span class="rhs">0</span></span>
+      <span class="nm"></span></div>
+    <div class="pr"><span class="lbl">c.</span>
+      <span class="eqn num"><span class="lhs">6 &times; (40 + 3)</span>=<span class="rhs">(6 &times; 40) + (6 &times; 3)</span></span>
+      <span class="nm"></span></div>
+    <div class="pr"><span class="lbl">d.</span>
+      <span class="eqn num"><span class="lhs">(4 &times; 25) &times; 9</span>=<span class="rhs">4 &times; (25 &times; 9)</span></span>
+      <span class="nm"></span></div>
+    <div class="pr"><span class="lbl">e.</span>
+      <span class="eqn num"><span class="lhs">17 &times; 1</span>=<span class="rhs">17</span></span>
+      <span class="nm"></span></div>
+  </div>
+</div></div>
+
+<div class="p"><div class="badge">3</div><div class="body">
+  <p class="q">One Arwing fires <b class="num val grp">7 &times; 8 = 56</b> shots.
+     <span class="ask">Use the pattern to find each product.</span></p>
+  <div class="cardrow grid2 num">
+    <div class="card"><span class="lbl">a.</span>7 &times; 80<span class="eq">= <span class="bx lg"></span></span></div>
+    <div class="card"><span class="lbl">b.</span>7 &times; 800<span class="eq">= <span class="bx lg"></span></span></div>
+    <div class="card"><span class="lbl">c.</span>7 &times; 8,000<span class="eq">= <span class="bx lg"></span></span></div>
+    <div class="card"><span class="lbl">d.</span>50 &times; 400<span class="eq">= <span class="bx lg"></span></span></div>
+  </div>
+</div></div>
+
+<div class="p"><div class="badge">4</div><div class="body">
+  <p class="q">The Great Fox has <b class="num val">487</b> fuel tanks. Each one holds
+     <b class="num val">62</b> gallons.</p>
+  <p class="sub2"><span class="lbl">a.</span><span class="txt">
+<span class="ask">Round each factor</span>, then estimate the product:</span></p>
+  <div class="est num"><span class="bx lg"></span> &times;
+     <span class="bx lg"></span> = <span class="bx lg"></span></div>
+  <p class="sub2"><span class="lbl">b.</span><span class="txt">Slippy says the exact answer is
+     <b class="num">3,019</b> gallons. Use your estimate to explain why Slippy is wrong.</span></p>
+  <div class="line"></div>
+  <div class="line"></div>
+</div></div>
+
+<p class="footer">&#9670; Good work, pilot &#9679; on to the next sector &#9670;</p>
+</div>
+
+<!-- ============================ PAGE 2 ============================ -->
+<div class="page">
+
+<div class="mini">
+  <svg width="40" height="32" viewBox="0 0 200 160" aria-label="Arwing">
+    <g stroke="#2A3445" stroke-width="7" stroke-linejoin="round">
+      <path d="M92,74 L14,128 L24,140 L96,106 Z" fill="#D9DEE6"/>
+      <path d="M108,74 L186,128 L176,140 L104,106 Z" fill="#D9DEE6"/>
+      <path d="M100,6 L116,108 L100,128 L84,108 Z" fill="#EEF1F5"/>
+      <circle cx="100" cy="136" r="8" fill="#F5A623"/>
+    </g>
+  </svg>
+  <h1>Star Fox Math Mission</h1>
+  <div class="pg">Page 2 of 3</div>
+  <div class="mname">Name: <span></span></div>
+</div>
+
+<div class="p"><div class="badge">5</div><div class="body">
+  <p class="q">Zeros in the multiplicand! Falco loads supply crates.
+     <span class="ask">Find each product.</span></p>
+  <div class="pair">
+    <div class="work sm">
+      <div class="pad"><span class="plbl">a.</span>
+        <div class="stack num"><div>3,075</div><div class="op">&times; 4</div></div></div>
+      <div class="ansbox"><div class="lab">Product:</div><div class="bx tall"></div></div>
+    </div>
+    <div class="work sm">
+      <div class="pad"><span class="plbl">b.</span>
+        <div class="stack num"><div>4,008</div><div class="op">&times; 6</div></div></div>
+      <div class="ansbox"><div class="lab">Product:</div><div class="bx tall"></div></div>
+    </div>
+  </div>
+</div></div>
+
+<div class="p"><div class="badge">6</div><div class="body">
+  <p class="q">Fox flies <b class="num val">348</b> miles on each of <b class="num val">27</b>
+     training runs. <span class="ask">How many miles in all?</span></p>
+  <div class="work md">
+    <div class="pad"><span>Show your work</span>
+      <div class="stack num"><div>348</div><div class="op">&times; 27</div></div></div>
+    <div class="ansbox"><div class="lab">Miles:</div><div class="bx tall"></div></div>
+  </div>
+</div></div>
+
+<div class="p"><div class="badge">7</div><div class="body">
+  <p class="q"><b class="num val">314</b> enemy ships each carry <b class="num val">526</b>
+     bolts of armor. <span class="ask">How many bolts in all?</span></p>
+  <div class="work lg">
+    <div class="pad"><span>Show your work</span>
+      <div class="stack num"><div>526</div><div class="op">&times; 314</div></div></div>
+    <div class="ansbox"><div class="lab">Bolts:</div><div class="bx tall"></div></div>
+  </div>
+</div></div>
+
+<div class="p"><div class="badge">8</div><div class="body">
+  <p class="q">A zero in the multiplier! The <b class="num val">208</b> asteroids in the
+     Meteo field are each <b class="num val">473</b> feet wide.
+     <span class="ask">Lined up end to end, how many feet long are they?</span></p>
+  <div class="work md">
+    <div class="pad"><span>Show your work</span>
+      <div class="stack num"><div>473</div><div class="op">&times; 208</div></div></div>
+    <div class="ansbox"><div class="lab">Feet:</div><div class="bx tall"></div></div>
+  </div>
+</div></div>
+
+<p class="footer">&#9670; Do a barrel roll! &#9679; one more sector to go &#9670;</p>
+</div>
+
+<!-- ============================ PAGE 3 ============================ -->
+<div class="page">
+
+<div class="mini">
+  <svg width="40" height="32" viewBox="0 0 200 160" aria-label="Arwing">
+    <g stroke="#2A3445" stroke-width="7" stroke-linejoin="round">
+      <path d="M92,74 L14,128 L24,140 L96,106 Z" fill="#D9DEE6"/>
+      <path d="M108,74 L186,128 L176,140 L104,106 Z" fill="#D9DEE6"/>
+      <path d="M100,6 L116,108 L100,128 L84,108 Z" fill="#EEF1F5"/>
+      <circle cx="100" cy="136" r="8" fill="#F5A623"/>
+    </g>
+  </svg>
+  <h1>Star Fox Math Mission</h1>
+  <div class="pg">Page 3 of 3</div>
+  <div class="mname">Name: <span></span></div>
+</div>
+
+<div class="p"><div class="badge">9</div><div class="body">
+  <p class="q">Fox buys <b class="num val">36</b> laser upgrades at <b class="num val">$12.45</b>
+     each. <span class="ask">How much does he spend?</span>
+     <br>Remember the $ and the decimal point!</p>
+  <div class="work lg">
+    <div class="pad"><span>Show your work</span>
+      <div class="stack num"><div>$12.45</div><div class="op">&times; 36</div></div></div>
+    <div class="ansbox"><div class="lab">Cost:</div><div class="bx tall"></div></div>
+  </div>
+</div></div>
+
+<div class="quest">
+  <div class="qh">
+    <svg width="26" height="21" viewBox="0 0 200 160">
+      <g stroke="#2A3445" stroke-width="10" stroke-linejoin="round">
+        <path d="M92,74 L14,128 L24,140 L96,106 Z" fill="#D9DEE6"/>
+        <path d="M108,74 L186,128 L176,140 L104,106 Z" fill="#D9DEE6"/>
+        <path d="M100,6 L116,108 L100,128 L84,108 Z" fill="#EEF1F5"/>
+      </g>
+    </svg>
+    <h2>10. Final Mission &#9679; Restocking the Great Fox</h2>
+  </div>
+  <p class="q">Before facing Andross, Fox buys <b>18</b> Smart Bombs and <b>35</b> Shield
+     Boosters, and pays with <b class="num">$200.00</b>.
+     <span class="ask">How much change does he get back?</span> Show each step.</p>
+
+  <div class="ing num">
+    <div><div class="nm2">Smart Bomb</div><div class="v">$4.25 each</div></div>
+    <div><div class="nm2">Shield Booster</div><div class="v">$2.50 each</div></div>
+    <div><div class="nm2">Fox pays with</div><div class="v">$200.00</div></div>
+  </div>
+
+  <div class="work xl">
+    <div class="pad"><span>Scratch work</span></div>
+    <div class="ansbox steps4">
+      <div class="row"><div class="lab">1. Smart Bombs cost</div><div class="bx"></div></div>
+      <div class="row"><div class="lab">2. Shield Boosters cost</div><div class="bx"></div></div>
+      <div class="row"><div class="lab">3. Total Fox spends</div><div class="bx"></div></div>
+      <div class="row"><div class="lab">4. Fox's change</div><div class="fin"></div></div>
+    </div>
+  </div>
+</div>
+
+<p class="footer">&#9670; Mission complete! Andross doesn't stand a chance. &#9670;</p>
+</div>
+
+<!-- ============================ PAGE 4: ANSWER KEY ============================ -->
+<div class="page key">
+
+<div class="mini">
+  <svg width="40" height="32" viewBox="0 0 200 160" aria-label="Arwing">
+    <g stroke="#2A3445" stroke-width="7" stroke-linejoin="round">
+      <path d="M92,74 L14,128 L24,140 L96,106 Z" fill="#D9DEE6"/>
+      <path d="M108,74 L186,128 L176,140 L104,106 Z" fill="#D9DEE6"/>
+      <path d="M100,6 L116,108 L100,128 L84,108 Z" fill="#EEF1F5"/>
+      <circle cx="100" cy="136" r="8" fill="#F5A623"/>
+    </g>
+  </svg>
+  <h1>Answer Key</h1>
+  <div class="pg">For the General grading the mission</div>
+</div>
+
+<div class="keybox">
+<ol>
+  <li>Missing factors: <span class="ref">Lesson 2-1, p. 66</span>
+    <ul>
+      <li>a. 7 &times; <span class="a num">8</span> = 56 &nbsp;&nbsp;
+          b. <span class="a num">7</span> &times; 9 = 63 &nbsp;&nbsp;
+          c. 25 &times; <span class="a num">1</span> = 25
+          <span class="why">(c is the Identity Property)</span></li>
+    </ul>
+  </li>
+
+  <li>Name the property: <span class="ref">Lesson 2-2, p. 68</span>
+    <ul>
+      <li>a. <span class="a">Commutative</span> <span class="why">(factors swapped order)</span>
+          &nbsp;&nbsp; b. <span class="a">Zero</span>
+          <span class="why">(anything times 0 is 0)</span></li>
+      <li>c. <span class="a">Distributive</span>
+          <span class="why">(the 6 multiplies both parts of 40 + 3; both sides equal 258)</span></li>
+      <li>d. <span class="a">Associative</span>
+          <span class="why">(same order, regrouped parentheses; both sides equal 900)</span>
+          &nbsp;&nbsp; e. <span class="a">Identity</span>
+          <span class="why">(times 1 stays the same)</span></li>
+    </ul>
+  </li>
+
+  <li>Pattern:
+    <span class="a num">560</span>, <span class="a num">5,600</span>,
+    <span class="a num">56,000</span>, then 50 &times; 400 = <span class="a num">20,000</span>
+    <span class="ref">Lessons 2-3 and 2-4, pp. 70&ndash;73</span>
+    <br><span class="why">Multiply the basic fact, then attach every zero from both factors.
+      Part d is the trap: 5 &times; 4 = 20 already ends in a zero, and the three zeros from
+      50 and 400 still go after it. Watch for 2,000.</span></li>
+
+  <li>Estimating: <span class="ref">Lesson 2-5, p. 74</span>
+    <ul>
+      <li>a. <span class="a num">500 &times; 60 = 30,000</span> gallons
+          <span class="why">(487 rounds to 500, 62 rounds to 60)</span></li>
+      <li>b. <span class="a">3,019 is far too small.</span> The estimate is about 30,000, so the
+          answer should have five digits. <span class="why">(The exact answer is 30,194.
+          Slippy probably forgot the placeholder zero when multiplying by the 6 tens of the
+          multiplier.)</span></li>
+    </ul>
+  </li>
+
+  <li>Zeros in the multiplicand:
+    <span class="a num">3,075 &times; 4 = 12,300</span> &nbsp;&nbsp;
+    <span class="a num">4,008 &times; 6 = 24,048</span>
+    <span class="ref">Lesson 2-6, p. 76</span>
+    <br><span class="why">The multiplicand is the number being multiplied (the top number).
+      Watch for 2,448 in part b: that means a zero was skipped instead of held as a
+      placeholder.</span></li>
+
+  <li><span class="a num">348 &times; 27 = 9,396</span> miles
+    <span class="ref">Lesson 2-7, p. 78</span>
+    <br><span class="why num">348 &times; 7 = 2,436 &nbsp; 348 &times; 20 = 6,960 &nbsp;
+      2,436 + 6,960 = 9,396</span></li>
+
+  <li><span class="a num">526 &times; 314 = 165,164</span> bolts
+    <span class="ref">Lesson 2-8, p. 80</span>
+    <br><span class="why num">526 &times; 4 = 2,104 &nbsp; 526 &times; 10 = 5,260 &nbsp;
+      526 &times; 300 = 157,800 &nbsp; total 165,164</span></li>
+
+  <li><span class="a num">473 &times; 208 = 98,384</span> feet
+    <span class="ref">Lesson 2-9, p. 82</span>
+    <br><span class="why num">473 &times; 8 = 3,784 &nbsp; 473 &times; 200 = 94,600 &nbsp;
+      3,784 + 94,600 = 98,384</span>
+    <br><span class="why">The multiplier (208) has a 0 in the tens place. That row is all zeros
+      and can be skipped, but the next row must
+      still shift two places. Watch for 13,244, which comes from shifting only one place.</span></li>
+
+  <li><span class="a num">$12.45 &times; 36 = $448.20</span>
+    <span class="ref">Lesson 2-10, p. 84</span>
+    <br><span class="why">Multiply as if it were 1245 &times; 36 = 44,820, then put back the two
+      decimal places. Estimate check: $12 &times; 36 is about $430.</span></li>
+
+  <li>Final Mission: Fox's change is <span class="a num">$36.00</span>
+    <span class="ref">Lesson 2-11, p. 86</span>
+    <ul>
+      <li>1. 18 &times; $4.25 = <span class="a num">$76.50</span> for Smart Bombs</li>
+      <li>2. 35 &times; $2.50 = <span class="a num">$87.50</span> for Shield Boosters</li>
+      <li>3. $76.50 + $87.50 = <span class="a num">$164.00</span> spent</li>
+      <li>4. $200.00 &minus; $164.00 = <span class="a num">$36.00</span> change</li>
+    </ul>
+    <span class="why">The hidden step is the total cost: the problem asks for change, so the
+      student has to find what was spent first.</span></li>
+</ol>
+</div>
+
+</div>
+
+</body></html>
