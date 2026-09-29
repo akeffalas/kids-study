@@ -24,6 +24,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -52,6 +53,12 @@ def tools_available() -> bool:
     return True
 
 
+# The references carry macOS font metrics, so the comparison is only meaningful
+# on macOS. Skipping on that basis, rather than on a missing tool, keeps a CI
+# image that happens to ship ImageMagick from failing on font rendering.
+on_reference_platform = pytest.mark.skipif(
+    sys.platform != "darwin", reason="references carry macOS font metrics"
+)
 needs_tools = pytest.mark.skipif(
     not tools_available(), reason="needs Chrome and ImageMagick"
 )
@@ -92,6 +99,7 @@ def differing_fraction(expected: Path, actual: Path) -> float:
     return float(match.group(1))
 
 
+@on_reference_platform
 @needs_tools
 def test_pages_match_reference(tmp_path):
     """Catches what the other gates cannot: how the page actually looks."""

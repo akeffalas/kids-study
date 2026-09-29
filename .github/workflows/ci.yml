@@ -40,11 +40,11 @@ jobs:
         run: uv run lint-imports
 
       - name: Test
-        # The render and pixel tests skip here by design. They need Chrome and
-        # ImageMagick, and the reference images carry macOS font metrics, so a
-        # Linux runner would fail on those rather than on a real regression.
-        # The correctness, contrast, token and binding gates run on the HTML
-        # alone and cover any change to the maths, stylesheet or palette.
+        # The runner image includes Chrome, so the render and pipeline tests run
+        # here, four-page check included. The pixel comparison skips: its
+        # references carry macOS font metrics, so it runs only on macOS. The
+        # correctness, contrast, token and binding gates run on the HTML alone
+        # and cover any change to the maths, stylesheet or palette.
         run: uv run pytest -v
 
       - name: Coverage

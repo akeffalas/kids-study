@@ -206,9 +206,10 @@ Regenerate deliberately, once the change is confirmed wanted:
 UPDATE_REFERENCE=1 uv run pytest tests/test_visual.py
 ```
 
-The Chrome-dependent tests skip where there is no browser, and the pixel test
-also needs ImageMagick. Both skip on CI rather than failing, since the
-references carry macOS font metrics. The correctness, contrast, token and
+The Chrome-dependent tests skip where there is no browser. GitHub's runners
+include Chrome, so they run in CI, page-count check included. The pixel test
+runs only on macOS, since the references carry macOS font metrics, and also
+needs ImageMagick. The correctness, contrast, token and
 binding gates need only the HTML, so every change to the maths, the stylesheet
 or the palette is still covered there.
 
