@@ -8,6 +8,11 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # GitHub only reads workflows from the repository root, so this lives here
+    # and runs every step inside the math project.
+    defaults:
+      run:
+        working-directory: math
     steps:
       - uses: actions/checkout@v4
 
@@ -15,6 +20,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          cache-dependency-glob: math/uv.lock
           # matches .python-version and requires-python
           python-version: "3.14"
 
