@@ -1,8 +1,23 @@
-# Hyrule Math Quest
+# Grade 5 maths worksheets
 
-A printable Grade 5 maths pre-test: Roman numerals, place value to millions,
+Printable, themed Grade 5 maths worksheets, one folder per textbook chapter, built
+and quality-gated for greyscale print by the shared tooling in this directory.
+
+| Folder | Worksheets | Chapter |
+| --- | --- | --- |
+| `chapter-1/` | Hyrule Math Quest | Place value, decimals, Roman numerals, properties |
+| `chapter-2/` | Star Fox Math Mission, Star Fox Bonus Mission | Multiplication |
+
+**Hyrule Math Quest** is a pre-test: Roman numerals, place value to millions,
 decimals to thousandths, rounding, comparing and ordering, the properties of
 operations, and a five-addend word problem, plus an answer key on page four.
+
+**Star Fox Math Mission** (4 pages) reviews the Chapter 2 test: factors and
+properties, patterns with zeros, estimating, multiplying up to 3 digits by 3
+digits, money, and a multi-step word problem. **Star Fox Bonus Mission** (3 pages)
+covers the test's hardest items: the Distributive Property as a strategy,
+choosing mental math or paper and pencil, multipliers ending in zeros, a 4-digit
+by 3-digit product, and cents-only money. Each ends with an answer key.
 
 Python 3.14, managed with uv.
 
@@ -14,13 +29,33 @@ uv run worksheet audit    # run the quality gates
 uv run worksheet check    # build, then audit
 ```
 
-`audit` and `check` exit non-zero when a gate fails, so either can gate a
-commit. Shared options work on both sides of the subcommand:
+These default to chapter 1. `audit` and `check` exit non-zero when a gate
+fails, so either can gate a commit. Shared options work on both sides of the
+subcommand:
 
 ```sh
 uv run worksheet audit --source other.html
 uv run worksheet --source other.html audit
 ```
+
+Chapter 2 builds the same way, naming its files:
+
+```sh
+uv run worksheet build --source chapter-2/starfox-math-review.html \
+                       --output chapter-2/StarFox-Math-Mission.pdf
+uv run worksheet build --source chapter-2/starfox-bonus-mission.html \
+                       --output chapter-2/StarFox-Bonus-Mission.pdf
+```
+
+### What the gates cover for chapter 2
+
+The print gates (tokens, binding, contrast, artwork) apply to any worksheet and
+pass for both Star Fox sheets. The correctness gates do not yet: `content.py`
+derives chapter 1's answers only, so auditing a chapter 2 sheet reports every
+Hyrule given and answer as missing, and the page-count gate expects chapter 1's
+four pages (the bonus sheet has three). The Star Fox answer keys were checked by
+hand against computed values when written, and nothing re-checks them after an
+edit. Bringing them under the gates means per-worksheet content and page counts.
 
 ## Why the gates exist
 
@@ -101,8 +136,15 @@ CI runs all of these on every push.
 ### Layout
 
 ```
-hyrule-math-review.html   the worksheet (source of truth)
-Hyrule-Math-Quest.pdf     build output
+chapter-1/
+  hyrule-math-review.html     the worksheet (source of truth)
+  Hyrule-Math-Quest.pdf       build output
+  reference/page-*.png        visual-regression references
+chapter-2/
+  starfox-math-review.html    main review worksheet
+  StarFox-Math-Mission.pdf
+  starfox-bonus-mission.html  bonus worksheet
+  StarFox-Bonus-Mission.pdf
 worksheet/
   numerals.py             Roman numerals, place value, rounding, number names
   colors.py               sRGB and WCAG maths
@@ -153,7 +195,7 @@ givens gate must fail. A gate that cannot fail is decoration.
 miss the failures that matter most. Sub-question labels riding above their
 baseline, a measure narrow enough to orphan "box." onto its own line, a change
 that pushed the sheet onto a fifth page: only the last of those was gated, and
-all three were found by looking. `tests/reference/page-*.png` holds a greyscale
+all three were found by looking. `chapter-1/reference/page-*.png` holds a greyscale
 raster of each page, and `test_visual.py` compares against it with a 0.2% pixel
 budget for Chrome's antialiasing noise. Rasterising in greyscale means a
 reference image also records what comes out of a mono laser.

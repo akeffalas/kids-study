@@ -1,0 +1,542 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Star Fox Bonus Mission</title>
+<style>
+  /* ============================================================
+     DESIGN TOKENS - every rule below resolves to these.
+     Token names are shared with the Hyrule worksheet so the same
+     print contract (worksheet/spec.py) applies here unchanged.
+     Illustration SVGs keep their own literal colors.
+     ============================================================ */
+  :root {
+    /* type ramp - 6 steps */
+    --t-xs: 11px; --t-sm: 13px; --t-md: 15px;
+    --t-lg: 18px; --t-xl: 22px; --t-display: 28px;
+    /* spacing scale - 5 steps */
+    --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px; --s5: 32px;
+    /* stroke weights - 3 steps */
+    --k1: 2px; --k2: 3px; --k3: 4px;
+    /* grid: 12 cols over a 675px body column. prose 10, data 12. */
+    --w-prose: 563px; --w-data: 675px;
+    /* color - 13 tokens */
+    --ink:     #1B2A41;  /* body text             */
+    --ink2:    #4A5A72;  /* secondary / italic    */
+    --title:   #16325C;  /* headings, badges      */
+    --label:   #2B568F;  /* sub-labels, arrows    */
+    --rule:    #6A7F9E;  /* dotted rules, boxes   */
+    --gold:    #3B6FC4;  /* container borders     */
+    --gold-hi: #F5A623;  /* accents, badge ring   */
+    --green:   #0F6E5C;  /* MATH VALUES ONLY      */
+    --red:     #A8321A;  /* directives            */
+    --paper1:  #F2F6FC;  /* banner gradient start */
+    --paper2:  #DCE6F5;  /* banner gradient end   */
+    --paper3:  #F8FBFF;  /* tinted fill           */
+    --tint:    #FFF8EC;  /* mission wash          */
+    --accent:  #B0600C;  /* bonus-sheet frame     */
+    --grid:    #BFCADB;  /* work-area grid lines  */
+  }
+
+  @page { size: letter; margin: 0.38in 0.5in; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Chalkboard SE", "Comic Sans MS", "Marker Felt", sans-serif;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .num { font-family: "Avenir Next", "Helvetica Neue", Helvetica, sans-serif;
+         font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  /* ---------- page 1 banner ---------- */
+  .banner {
+    position: relative; border: 5px solid var(--gold); border-radius: 18px;
+    background: linear-gradient(135deg,var(--paper1) 0%, var(--paper2) 100%);
+    padding: var(--s3) 176px var(--s3) 124px; margin-bottom: var(--s3);
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .banner h1 { margin: 0 0 var(--s1); font-size: var(--t-display); color: var(--title);
+               line-height: 1.12; }
+  .banner .sub { font-size: var(--t-sm); color: var(--ink2); margin: 0 0 var(--s3); }
+  .banner .tri { position: absolute; left: var(--s3); top: var(--s3);
+                 width: 96px; height: 80px; }
+  .banner .shd { position: absolute; right: var(--s3); top: 50%;
+                 transform: translateY(-50%); width: 70px; height: 66px; }
+  .fields { display: flex; gap: var(--s4); font-size: var(--t-sm); color: var(--ink2);
+            max-width: var(--w-prose); }
+  .fields div { display: flex; align-items: baseline; gap: var(--s2); }
+  .fields div:first-child { flex: 1; }
+  .fields span { flex: 1; border-bottom: 2.5px dotted var(--rule); min-width: 90px; }
+  .fields div:last-child span { min-width: 104px; }
+  /* score patch: a round mission badge between the title and the planet */
+  .banner .score { position: absolute; right: 94px; top: 50%; transform: translateY(-50%);
+                   width: 72px; height: 72px; border-radius: 50%;
+                   border: var(--k2) solid var(--gold); background: #fff;
+                   display: flex; flex-direction: column; align-items: center;
+                   justify-content: center; font-size: var(--t-xs); color: var(--ink2); }
+  .banner .score .num { font-size: var(--t-md); color: var(--title); }
+  .banner .score span { display: inline-block; width: 24px; height: 20px;
+                        border-bottom: 2.5px dotted var(--rule); }
+
+  /* ---------- running header ---------- */
+  .mini { display: flex; align-items: center; gap: var(--s3);
+          border: var(--k3) solid var(--gold); border-radius: 15px;
+          background: linear-gradient(135deg,var(--paper1) 0%, var(--paper2) 100%);
+          padding: var(--s2) var(--s3); margin-bottom: var(--s3); }
+  .mini h1 { margin: 0; font-size: var(--t-lg); color: var(--title); }
+  .mini .pg { margin-left: auto; font-size: var(--t-sm); color: var(--ink2);
+              font-style: italic; }
+  .mini .mname { font-size: var(--t-sm); color: var(--ink2); white-space: nowrap; }
+  .mini .mname span { display: inline-block; border-bottom: 2.5px dotted var(--rule);
+                      min-width: 128px; }
+  .mini svg { flex: 0 0 auto; }
+
+  /* ---------- problem shell ---------- */
+  .p { display: flex; gap: var(--s3); margin-bottom: var(--s3);
+       page-break-inside: avoid; }
+  .badge { flex: 0 0 33px; height: 33px; border-radius: 50%; background: var(--title);
+           color: #fff; font-size: var(--t-lg); font-weight: 700; display: flex;
+           align-items: center; justify-content: center;
+           border: var(--k2) solid var(--gold-hi); }
+  .body { flex: 1; padding-top: 1px; }
+  .q { font-size: var(--t-md); line-height: 1.45; margin: 0; max-width: var(--w-prose); }
+  .q .big { font-size: var(--t-xl); color: var(--green); }
+  .q .val { color: var(--green); }
+  /* underlined so a directive still stands out when printed in greyscale */
+  .ask { color: var(--red); font-weight: 700; text-decoration: underline;
+         text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+  /* keeps a run of values together so a line never breaks inside it */
+  .grp { white-space: nowrap; }
+
+  /* sub-questions: one per line, labels in a fixed gutter */
+  /* baseline, not stretch - otherwise the a./b./c. labels ride high */
+  .sub2 { display: flex; align-items: baseline; gap: var(--s2); font-size: var(--t-md);
+          margin: var(--s2) 0 0; max-width: var(--w-prose); line-height: 1.5; }
+  .sub2 .lbl { flex: 0 0 15px; color: var(--label); font-weight: 700; }
+  .sub2 .txt { flex: 1; }
+  .note2 { font-size: var(--t-sm); margin: var(--s2) 0 0; max-width: var(--w-prose);
+           line-height: 1.5; }
+
+  /* AFFORDANCE 1 - rule, for words and sentences */
+  .blank { display: inline-block; border-bottom: 2.5px dotted var(--rule);
+           min-width: 140px; height: var(--s4); vertical-align: -3px; }
+  .blank.s { min-width: 58px; }
+  .blank.w { min-width: 190px; }
+  .line { border-bottom: 2.5px dotted var(--rule); height: var(--s5);
+          max-width: var(--w-data); }
+
+  /* AFFORDANCE 2 - box, for a single short value. 34px clears a child's pencil. */
+  .bx { display: inline-block; height: 34px; min-width: 74px;
+        border: 2.5px dotted var(--rule); border-radius: 9px; background: #fff;
+        vertical-align: -11px; margin: 0 var(--s1); }
+  .bx.sm { min-width: 46px; }
+  .bx.lg { min-width: 100px; margin: 0; }
+  .bx.tall { height: 44px; min-width: 150px; margin: 0; }
+
+  /* ---------- table: shares the prose column exactly ---------- */
+  table { border-collapse: collapse; margin: var(--s2) 0 0;
+          width: var(--w-prose); table-layout: fixed; }
+  th, td { border: 2.5px solid var(--ink2); padding: var(--s2) var(--s3);
+           font-size: var(--t-lg); text-align: center; letter-spacing: 1px;
+           color: var(--green); height: 38px; }
+  /* tinted, not solid dark - a filled bar is the thirstiest element on a mono laser */
+  th { background: var(--paper2); color: var(--title); font-size: var(--t-sm);
+       letter-spacing: 0; height: auto; border-bottom-width: 4px; }
+  td.fill { background: var(--paper3); }
+
+  /* ---------- card: ONE component for every grouped-value container ---------- */
+  .cardrow { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+             margin-top: var(--s3); max-width: var(--w-data); }
+  .card { display: flex; align-items: center; gap: var(--s1);
+          border: var(--k2) solid var(--rule); border-radius: 12px; background: #fff;
+          padding: var(--s2) var(--s3); font-size: var(--t-lg); color: var(--green); }
+  .card.big { font-size: var(--t-xl); padding: var(--s2) var(--s4); }
+  /* smaller type centres high against the digits, so drop it onto their baseline */
+  .card .lbl { font-size: var(--t-md); color: var(--label); margin-right: var(--s1);
+               position: relative; top: 2px; }
+  .card .bx { margin-top: 0; margin-bottom: 0; vertical-align: middle; }
+  /* an equation of equal answer boxes, indented under its a./b. label */
+  .est { display: flex; align-items: center; gap: var(--s2); margin: var(--s2) 0 0 23px;
+         font-size: var(--t-lg); color: var(--green); }
+  .cardrow.grid2 { display: grid; grid-template-columns: 1fr 1fr; max-width: var(--w-data); }
+  .cardrow.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; max-width: var(--w-data); }
+  .grid3 .card { justify-content: center; }
+  /* 4. "= box" pinned right, so the answers form one column down the grid */
+  .card .eq { margin-left: auto; display: flex; align-items: center; gap: var(--s1); }
+  .amp { font-size: var(--t-sm); color: var(--ink2); font-style: italic; }
+
+  /* ---------- properties ---------- */
+  .bank { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center;
+          margin: var(--s2) 0 var(--s1); max-width: var(--w-data); }
+  .bank .bl { font-size: var(--t-sm); color: var(--ink2); font-style: italic; }
+  .bank .chip { border: 2.5px solid var(--rule); border-radius: 999px;
+                background: var(--paper3); padding: var(--s1) var(--s3);
+                font-size: var(--t-sm); color: var(--ink); font-weight: 700; }
+  .props { max-width: var(--w-data); }
+  .props .pr { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s2); }
+  .props .pr .lbl { flex: 0 0 15px; font-size: var(--t-sm); color: var(--label);
+                    font-weight: 700; }
+  /* right-aligned so every equation ends the same distance from its rule */
+  /* set on the = sign: left side right-aligned, right side left-aligned */
+  .props .pr .eqn { flex: 0 0 360px; font-size: var(--t-lg); color: var(--green);
+                    display: flex; gap: var(--s2); }
+  .props .pr .eqn .lhs { flex: 0 0 132px; text-align: right; }
+  .props .pr .eqn .rhs { flex: 1; }
+  .props .pr .nm { flex: 1; border-bottom: 2.5px dotted var(--rule); height: 26px; }
+
+  /* ---------- work areas ---------- */
+  .pad { border: 2.5px dashed var(--rule); border-radius: 11px; background: #fff;
+         position: relative; }
+  .pad span { position: absolute; top: var(--s1); left: var(--s3); font-size: var(--t-xs);
+              color: var(--ink2); font-style: italic; }
+  .work { display: flex; gap: var(--s3); align-items: stretch; margin-top: var(--s2);
+          max-width: var(--w-data); }
+  .work .pad { flex: 1; height: 230px; }
+  .work.sm .pad { height: 116px; }
+  .work.md .pad { height: 150px; }
+  .work.lg .pad { height: 196px; }
+  .work.xl .pad { height: 290px; }
+  /* answer box level with the bottom of the pad, where the working ends */
+  .work .ansbox { flex: 0 0 176px; display: flex; flex-direction: column;
+                  justify-content: flex-end; }
+  .work .ansbox .lab { font-size: var(--t-sm); color: var(--ink2); font-weight: 700;
+                       margin-bottom: var(--s1); }
+  /* solid green = the ONE final-answer treatment, used once in the document */
+  .fin { border: var(--k2) solid var(--green); border-radius: 10px; background: #fff;
+         height: 44px; }
+
+  /* two short problems side by side, each with its own pad */
+  .pair { display: flex; gap: var(--s3); margin-top: var(--s2); max-width: var(--w-data); }
+  .pair .work { flex: 1; margin-top: 0; }
+  .pair .work .ansbox { flex: 0 0 110px; }
+  .pair .bx.tall { min-width: 110px; }
+
+  /* a problem written in columns, the way the student will work it */
+  .stack { position: absolute; top: var(--s4); left: var(--s4); text-align: right;
+           font-size: var(--t-xl); color: var(--green); line-height: 1.3; }
+  .stack .op { border-bottom: var(--k2) solid var(--ink); padding-left: var(--s4); }
+
+  /* ---------- word problem ---------- */
+  .quest { border: var(--k3) solid var(--gold); border-radius: 16px; background: var(--tint);
+           padding: var(--s3); page-break-inside: avoid; }
+  .quest .qh { display: flex; align-items: center; gap: var(--s2); margin: 0 0 var(--s2); }
+  .quest h2 { margin: 0; font-size: var(--t-lg); color: var(--title); }
+  .quest .q, .quest .work { max-width: none; }
+  .ing { display: flex; gap: var(--s2); margin: var(--s3) 0 0; }
+  .ing > div { flex: 1; border: 2.5px solid var(--rule); border-radius: 10px; background: #fff;
+             padding: var(--s2) var(--s1); text-align: center; }
+  .ing .nm2 { font-size: var(--t-xs); color: var(--ink2); line-height: 1.15; height: 28px;
+              display: flex; align-items: center; justify-content: center; }
+  .ing .v { font-size: var(--t-md); color: var(--green); margin-top: var(--s1); }
+
+  .work .ansbox.steps4 { flex: 0 0 290px; gap: var(--s2); }
+  .steps4 .row { display: flex; align-items: center; gap: var(--s2); }
+  .steps4 .row .lab { flex: 1; margin: 0; }
+  .steps4 .row .bx { flex: 0 0 110px; margin: 0; }
+  .steps4 .row .fin { flex: 0 0 110px; }
+
+  .footer { margin-top: var(--s3); text-align: center; font-size: var(--t-sm);
+            color: var(--ink2); }
+
+  /* ---------- answer key ---------- */
+  .key h1 { font-size: var(--t-lg); color: var(--title); margin: 0; }
+  .keybox { border: var(--k2) solid var(--gold); border-radius: 16px;
+            background: var(--paper3); padding: var(--s2) var(--s4) var(--s3); }
+  .key ol { font-size: var(--t-sm); line-height: 1.5; padding-left: var(--s4); margin: 0; }
+  .key ol > li { margin-bottom: var(--s2); }
+  .key .a { color: var(--green); font-weight: 700; }
+  .key .why { color: var(--ink2); font-size: var(--t-sm); font-style: italic; }
+  .key .why.num { font-weight: 400; font-style: normal; }
+  .key ul { margin: 2px 0 var(--s1); padding-left: var(--s3); font-size: var(--t-sm);
+            line-height: 1.45; list-style: none; }
+  /* 9. where to go back in the textbook when a question is missed */
+  .key .ref { color: var(--label); font-size: var(--t-xs); font-weight: 700;
+              margin-left: var(--s2); }
+  /* ---------- bonus mission additions ---------- */
+  /* a worked chain of boxes that wraps between groups, never inside one */
+  .steps { margin-top: var(--s2); font-size: var(--t-lg); color: var(--green);
+           line-height: 2.05; max-width: var(--w-data); }
+  .steps .grp { white-space: nowrap; }
+  .steps .lbl { font-size: var(--t-md); color: var(--label); margin-right: var(--s2); }
+  .steps .note { font-size: var(--t-md); color: var(--ink); margin: 0 var(--s1); }
+  /* room for a child's handwriting of a 7-to-9 character number */
+  .bx.xl { min-width: 160px; }
+  /* 7. bonus sheets get their own frame colour so they are easy to tell apart */
+  /* the double frame is thicker, so trim the padding to keep the header's height */
+  .mini { border: 7px double var(--accent); padding-top: 4px; padding-bottom: 4px; }
+  .keybox { border: 7px double var(--accent); }
+  .mini h1, .mini .pg { white-space: nowrap; }
+  .tag { background: var(--accent); color: #fff; font-size: var(--t-xs); font-weight: 700;
+         letter-spacing: .12em; border-radius: 999px; padding: 2px var(--s2); }
+  .mini .date span { min-width: 90px; }
+  /* 2. one clean row: the message, then a round score badge like the main quiz */
+  .intro { display: flex; align-items: center; gap: var(--s3); margin: 0 0 var(--s2);
+           max-width: var(--w-data); }
+  .intro .msg { flex: 1; font-size: var(--t-sm); color: var(--ink2); font-style: italic; }
+  .starbadge { flex: 0 0 60px; height: 60px; border-radius: 50%;
+               border: var(--k2) solid var(--accent); background: #fff;
+               display: flex; flex-direction: column; align-items: center;
+               justify-content: center; font-size: var(--t-xs); color: var(--ink2); }
+  .starbadge .num { font-size: var(--t-md); color: var(--title); }
+  .starbadge span { display: inline-block; width: 30px; height: 18px;
+                    border-bottom: 2.5px dotted var(--rule); }
+  .sub2.wide, .q.wide { max-width: var(--w-data); }
+  .cardrow.grid2 { margin-top: var(--s2); }
+  .grid2 .card .bx.sm { margin-left: auto; }
+  .yn { display: inline-block; font-weight: 700; color: var(--title); letter-spacing: .08em;
+        border: 2.5px solid var(--rule); border-radius: 999px; background: #fff;
+        padding: 0 var(--s3); margin-left: var(--s3); }
+  /* a grid of whole square cells, inset from the dashed border and closed on every side,
+     keeps partial products in their columns */
+  .gridarea { position: absolute; left: var(--s3); top: 26px;
+              width: 421.5px; height: 271.5px;   /* 14 x 9 cells of 30px, plus the closing line */
+              background-image: linear-gradient(var(--grid) 1.5px, transparent 1.5px),
+                                linear-gradient(90deg, var(--grid) 1.5px, transparent 1.5px);
+              background-size: 30px 30px;
+              border-right: 1.5px solid var(--grid); border-bottom: 1.5px solid var(--grid); }
+  /* the problem printed one digit per cell, starting one column in */
+  .gstack { position: absolute; left: 30px; top: 0; display: grid;
+            grid-template-columns: repeat(9, 30px); grid-auto-rows: 30px;
+            font-size: var(--t-xl); color: var(--green); }
+  .gstack i { position: relative; font-style: normal; text-align: center; line-height: 31px; }
+  /* decimal point on the cell edge, so digits keep their columns */
+  .gstack i.dp::after { content: "."; position: absolute; right: -3px; }
+  /* the answer line lies exactly on the grid line under the second row */
+  .gstack .rule { position: absolute; left: 0; right: 0; top: 59.25px; height: 3px;
+                  background: var(--ink); }
+  .work.lg .pad { height: 318px; }
+  .chain { display: grid; grid-template-columns: auto auto 1fr; column-gap: var(--s2);
+           align-items: center; row-gap: var(--s2); margin-top: var(--s2);
+           font-size: var(--t-lg); color: var(--green); max-width: var(--w-data); }
+  .chain .note { font-size: var(--t-md); color: var(--ink); }
+  .work.md .pad { height: 158px; }
+  .footer.tight { margin: var(--s2) 0 0; }
+</style></head>
+<body>
+
+<!-- ============================ PAGE 1: BONUS MISSION ============================ -->
+<div class="page">
+
+<div class="mini">
+  <svg width="40" height="32" viewBox="0 0 200 160" aria-label="Arwing">
+    <g stroke="#2A3445" stroke-width="7" stroke-linejoin="round">
+      <path d="M92,74 L14,128 L24,140 L96,106 Z" fill="#D9DEE6"/>
+      <path d="M108,74 L186,128 L176,140 L104,106 Z" fill="#D9DEE6"/>
+      <path d="M100,6 L116,108 L100,128 L84,108 Z" fill="#EEF1F5"/>
+      <circle cx="100" cy="136" r="8" fill="#F5A623"/>
+    </g>
+  </svg>
+  <h1>Star Fox Mission</h1>
+  <span class="tag">BONUS</span>
+  <div class="pg">Page 1 of 2</div>
+  <div class="mname">Name: <span></span></div>
+  <div class="mname date">Date: <span></span></div>
+</div>
+<div class="intro"><p class="msg">Secret Sector Z! Do this after the main mission. The
+   challenges get harder as you go.</p>
+   <div class="starbadge">Stars<div class="num"><span></span>/5</div></div></div>
+
+<div class="p"><div class="badge">1</div><div class="body">
+  <p class="q wide">Zeros at the end. <span class="ask">Multiply the nonzero digits, then write
+     the zeros from both factors.</span></p>
+  <div class="steps num">
+    <span class="grp"><span class="lbl">a.</span>312 &times; 8 = <span class="bx lg"></span></span>
+    <span class="grp"><span class="note">zeros:</span> <span class="bx sm"></span></span>
+    <span class="grp"><span class="note">so</span> 312 &times; 80 = <span class="bx xl"></span></span>
+  </div>
+  <div class="steps num">
+    <span class="grp"><span class="lbl">b.</span>423 &times; 6 = <span class="bx lg"></span></span>
+    <span class="grp"><span class="note">zeros:</span> <span class="bx sm"></span></span>
+    <span class="grp"><span class="note">so</span> 4,230 &times; 600 = <span class="bx xl"></span></span>
+  </div>
+</div></div>
+
+<div class="p"><div class="badge">2</div><div class="body">
+  <p class="q">Mental math or paper and pencil?
+     <span class="ask">Write M or P in each box.</span></p>
+  <div class="cardrow grid2 num">
+    <div class="card"><span class="grp"><span class="lbl">a.</span>30 &times; 500</span>
+      <span class="bx sm"></span></div>
+    <div class="card"><span class="grp"><span class="lbl">b.</span>468 &times; 37</span>
+      <span class="bx sm"></span></div>
+    <div class="card"><span class="grp"><span class="lbl">c.</span>9 &times; 6,000</span>
+      <span class="bx sm"></span></div>
+    <div class="card"><span class="grp"><span class="lbl">d.</span>2,053 &times; 48</span>
+      <span class="bx sm"></span></div>
+  </div>
+  <p class="sub2 wide"><span class="lbl">e.</span><span class="txt"><span class="ask">Solve your
+     M problems in your head.</span> Write the letter, then the product.</span></p>
+  <div class="steps num">
+    <span class="grp"><span class="note">Letter</span> <span class="bx sm"></span> =
+      <span class="bx xl"></span></span>
+    &nbsp;&nbsp;
+    <span class="grp"><span class="note">Letter</span> <span class="bx sm"></span> =
+      <span class="bx xl"></span></span>
+  </div>
+  <p class="sub2 wide"><span class="lbl">f.</span><span class="txt">Write a problem of your own
+     that is good for mental math, and solve it:</span></p>
+  <div class="line"></div>
+  <div class="line"></div>
+</div></div>
+
+<div class="p"><div class="badge">3</div><div class="body">
+  <p class="q">Falco buys <b class="num val">48</b> energy cells at <b class="num val">$0.35</b>
+     each. He says the total is <b class="num">$168.00</b>.</p>
+  <p class="sub2"><span class="lbl">a.</span><span class="txt"><span class="ask">Find the real
+     total.</span></span></p>
+  <div class="work md">
+    <div class="pad"><span>Show your work</span>
+      <div class="stack num"><div>$0.35</div><div class="op">&times; 48</div></div></div>
+    <div class="ansbox"><div class="lab">Real total:</div><div class="bx tall"></div></div>
+  </div>
+  <p class="sub2 wide"><span class="lbl">b.</span><span class="txt"><span class="ask">What mistake
+     did Falco make?</span></span></p>
+  <div class="line"></div>
+  <div class="line"></div>
+</div></div>
+
+<p class="footer tight">&#9670; Nice flying &#9679; the toughest challenges are on the next page &#9670;</p>
+</div>
+
+<!-- ============================ PAGE 2: BONUS MISSION ============================ -->
+<div class="page">
+
+<div class="mini">
+  <svg width="40" height="32" viewBox="0 0 200 160" aria-label="Arwing">
+    <g stroke="#2A3445" stroke-width="7" stroke-linejoin="round">
+      <path d="M92,74 L14,128 L24,140 L96,106 Z" fill="#D9DEE6"/>
+      <path d="M108,74 L186,128 L176,140 L104,106 Z" fill="#D9DEE6"/>
+      <path d="M100,6 L116,108 L100,128 L84,108 Z" fill="#EEF1F5"/>
+      <circle cx="100" cy="136" r="8" fill="#F5A623"/>
+    </g>
+  </svg>
+  <h1>Star Fox Mission</h1>
+  <span class="tag">BONUS</span>
+  <div class="pg">Page 2 of 2</div>
+  <div class="mname">Name: <span></span></div>
+  <div class="mname date">Date: <span></span></div>
+</div>
+
+<div class="p"><div class="badge">4</div><div class="body">
+  <p class="q">Test-level challenge! The Great Fox flies <b class="num val">6,284</b> miles each
+     hour for <b class="num val">357</b> hours.</p>
+  <p class="sub2 wide"><span class="lbl">a.</span><span class="txt"><span class="ask">Round each
+     factor</span> to its greatest place, then estimate the product:</span></p>
+  <div class="steps num">
+    <span class="grp"><span class="bx lg"></span> &times; <span class="bx lg"></span> =
+      <span class="bx xl"></span></span>
+  </div>
+  <p class="sub2 wide"><span class="lbl">b.</span><span class="txt"><span class="ask">Find the
+     exact distance.</span> Keep each digit in its own column.</span></p>
+  <div class="work lg">
+    <div class="pad"><span>Show your work</span>
+      <div class="gridarea"><div class="gstack num"><i></i><i></i><i></i><i></i><i></i><i>6</i><i>2</i><i>8</i><i>4</i><i></i><i></i><i></i><i></i><i></i><i>×</i><i>3</i><i>5</i><i>7</i><div class="rule"></div></div></div></div>
+    <div class="ansbox"><div class="lab">Miles:</div><div class="bx tall"></div></div>
+  </div>
+  <p class="sub2 wide"><span class="lbl">c.</span><span class="txt">Is your exact answer close to
+     your estimate? Circle one: <span class="yn">YES</span><span class="yn">NO</span></span></p>
+</div></div>
+
+<div class="p"><div class="badge">5</div><div class="body">
+  <p class="q">The Great Fox makes <b class="num val">6</b> hyperspace jumps of
+     <b class="num val">300,040</b> miles each. How far does it travel?</p>
+  <p class="sub2 wide"><span class="lbl">a.</span><span class="txt"><span class="ask">Use the
+     Distributive Property:</span> break 300,040 apart.</span></p>
+  <div class="chain num">
+    <span class="grp">6 &times; ( <span class="bx xl"></span> + <span class="bx"></span> )</span>
+    <span>=</span>
+    <span class="grp"><span class="bx xl"></span> + <span class="bx"></span></span>
+    <span></span>
+    <span>=</span>
+    <span class="grp"><span class="bx xl"></span> <span class="note">miles</span></span>
+  </div>
+  <p class="sub2 wide"><span class="lbl">b.</span><span class="txt"><span class="ask">Explain how
+     you used the Distributive Property.</span></span></p>
+  <div class="line"></div>
+  <div class="line"></div>
+  <div class="line"></div>
+</div></div>
+
+<p class="footer">&#9670; Bonus mission complete! You're ready for the test, pilot. &#9670;</p>
+</div>
+
+<!-- ============================ PAGE 2: ANSWER KEY ============================ -->
+<div class="page key">
+
+<div class="mini">
+  <svg width="40" height="32" viewBox="0 0 200 160" aria-label="Arwing">
+    <g stroke="#2A3445" stroke-width="7" stroke-linejoin="round">
+      <path d="M92,74 L14,128 L24,140 L96,106 Z" fill="#D9DEE6"/>
+      <path d="M108,74 L186,128 L176,140 L104,106 Z" fill="#D9DEE6"/>
+      <path d="M100,6 L116,108 L100,128 L84,108 Z" fill="#EEF1F5"/>
+      <circle cx="100" cy="136" r="8" fill="#F5A623"/>
+    </g>
+  </svg>
+  <h1>Answer Key</h1>
+  <span class="tag">BONUS</span>
+  <div class="pg">For the General grading the mission</div>
+</div>
+
+<div class="keybox">
+<ol>
+  <li>Multipliers ending in zeros: <span class="ref">Lessons 2-3 and 2-9, pp. 70, 82</span>
+    <ul>
+      <li>a. 312 &times; 8 = <span class="a num">2,496</span>, zeros: <span class="a num">1</span>,
+          so 312 &times; 80 = <span class="a num">24,960</span></li>
+      <li>b. 423 &times; 6 = <span class="a num">2,538</span>, zeros: <span class="a num">3</span>,
+          so 4,230 &times; 600 = <span class="a num">2,538,000</span></li>
+    </ul>
+    <span class="why">In b, one zero comes from 4,230 and two from 600. Watch for 253,800, which
+      counts only the zeros in 600.</span></li>
+
+  <li>Choose the method: <span class="ref">p. 75; Chapter Test #30&ndash;31</span>
+    <ul>
+      <li>a. <span class="a">M</span> &nbsp; b. <span class="a">P</span> &nbsp;
+          c. <span class="a">M</span> &nbsp; d. <span class="a">P</span></li>
+      <li>e. <span class="a">a = 15,000</span> &nbsp;&nbsp; <span class="a">c = 54,000</span>
+          <span class="why">(either order)</span></li>
+      <li>f. Accept any basic fact with zeros attached, solved correctly (for example,
+          70 &times; 800 = 56,000).</li>
+    </ul>
+    <span class="why">Rule of thumb: basic fact plus zeros is mental math; anything that needs
+      regrouping or partial products is paper and pencil. For reference, b = 17,316 and
+      d = 98,544.</span></li>
+
+  <li>Cents only: <span class="ref">Lesson 2-10, p. 84</span>
+    <ul>
+      <li>a. <span class="a num">$0.35 &times; 48 = $16.80</span></li>
+      <li>b. Falco put <span class="a">the decimal point</span> in the wrong place: he counted one
+          decimal place instead of two. <span class="why">Accept any answer that names the
+          decimal point.</span></li>
+    </ul>
+    <span class="why">35 &times; 48 = 1,680, then write the decimal point two places from the
+      right. Estimate check: about 50 &times; $0.35 = $17.50, so $168 is far too much.</span></li>
+
+  <li>Test-level challenge: <span class="ref">Lessons 2-5 and 2-8, pp. 74, 80</span>
+    <ul>
+      <li>a. <span class="a num">6,000 &times; 400 = 2,400,000</span>
+          <span class="why">(6,284 rounds to 6,000; 357 rounds to 400)</span></li>
+      <li>b. <span class="a num">6,284 &times; 357 = 2,243,388</span> miles
+          &nbsp;&nbsp; c. <span class="a">YES</span></li>
+    </ul>
+    <span class="why num">6,284 &times; 7 = 43,988 &nbsp; 6,284 &times; 50 = 314,200 &nbsp;
+      6,284 &times; 300 = 1,885,200 &nbsp; total 2,243,388</span>
+    <br><span class="why">Watch for 546,708: that comes from shifting the hundreds row
+      (6,284 &times; 3) only one place instead of two. If your child circles YES next to an answer
+      like that, go over what "close" means.</span></li>
+
+  <li>Distributive Property: <span class="ref">Lesson 2-2, p. 68; Chapter Test #29</span>
+    <ul>
+      <li>a. <span class="a num">6 &times; (300,000 + 40) = 1,800,000 + 240 = 1,800,240</span>
+          miles</li>
+      <li>b. A full answer says: break 300,040 into 300,000 + 40, multiply each part by 6, then
+          add the two products. <span class="why">Accept any explanation with those three
+          steps.</span></li>
+    </ul>
+  </li>
+</ol>
+</div>
+
+</div>
+
+</body></html>
