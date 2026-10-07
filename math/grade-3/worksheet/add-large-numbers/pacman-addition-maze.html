@@ -1,0 +1,265 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Pac-Man Addition Maze</title>
+<style>
+  :root {
+    --t-xs: 11px; --t-sm: 13px; --t-md: 15px; --t-lg: 18px; --t-xl: 26px; --t-display: 30px;
+    --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px;
+    --ink: #1B2A41; --ink2: #4A5A72; --maze: #1F3FBF;
+    --pellet: #FFD21F; --rule: #6A7F9E; --green: #0F6E5C;
+    --red: #A8321A; --wash: #F5F7FE;
+    --faded: #7D8BA0;  /* example digits: 3.2:1 on wash, a clear step lighter than --red in grey */
+    --hair: #8E9CB3;   /* table rules that must survive a mono laser */
+  }
+  @page { size: letter; margin: 0.38in 0.5in; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink);
+         font-family: "Chalkboard SE", "Comic Sans MS", "Marker Felt", sans-serif;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .num { font-family: "Avenir Next", "Helvetica Neue", Helvetica, sans-serif;
+          font-weight: 700; font-variant-numeric: tabular-nums; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  .icon { width: 30px; height: 30px; }
+
+  /* maze-wall frame: the arcade's double blue line */
+  .banner, .mini { border: 7px double var(--maze); border-radius: 18px; background: var(--wash); }
+  .banner { display: flex; align-items: center; gap: var(--s3);
+             padding: var(--s2) var(--s4); margin-bottom: var(--s3); }
+  .banner h1 { margin: 0 0 var(--s2); font-size: var(--t-display); color: var(--maze); letter-spacing: .02em; }
+  .banner .mid { flex: 1; }
+  .pacbig { width: 64px; height: 64px; flex: 0 0 auto; }
+  .ghosts { display: flex; gap: var(--s1); }
+  .ghosts .icon { width: 34px; height: 34px; }
+  .fields { display: flex; gap: var(--s4); font-size: var(--t-sm); color: var(--ink2); }
+  .fields div { display: flex; gap: var(--s2); align-items: baseline; }
+  .fields div:first-child { flex: 1; }
+  .fields span { flex: 1; min-width: 90px; border-bottom: 2.5px dotted var(--rule); }
+
+  .mini { display: flex; align-items: center; gap: var(--s3); padding: var(--s1) var(--s3);
+           margin-bottom: var(--s3); }
+  .mini h1 { margin: 0; font-size: var(--t-lg); color: var(--maze); }
+  .pacsm { width: 34px; height: 34px; }
+  .mini .pg { margin-left: auto; font-size: var(--t-sm); color: var(--ink2); font-style: italic; }
+  .mini .mname { font-size: var(--t-sm); color: var(--ink2); }
+  .mini .mname span { display: inline-block; min-width: 150px; border-bottom: 2.5px dotted var(--rule); }
+
+  /* ---------- cards: 2 columns, 3 rows per page ---------- */
+  .probs { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 204px; gap: 12px var(--s3); }
+  .prob { border: 3px solid var(--maze); border-radius: 14px; background: #fff;
+           padding: 8px var(--s3) 8px 8px; display: flex; gap: var(--s3);
+           page-break-inside: avoid; }
+  /* left rail: number, level fruit, and a box to tick once the answer is re-checked */
+  .side { flex: 0 0 64px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .side .icon { width: 26px; height: 26px; margin-top: var(--s1); }
+  .lvl { font-size: var(--t-xs); color: var(--ink2); }
+  .chk { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 2px;
+          font-size: var(--t-xs); color: var(--ink2); }
+  .chk span { width: 22px; height: 22px; border: 2.5px solid var(--ink); border-radius: 6px; }
+  .pellet { width: 32px; height: 32px; border-radius: 50%; background: var(--pellet);
+             border: 3px solid var(--ink); font-size: var(--t-lg); font-weight: 700;
+             display: flex; align-items: center; justify-content: center; }
+
+  /* one digit per cell so every column lines up */
+  .cgrid { flex: 1; display: grid; justify-content: center; align-content: center;
+            grid-template-columns: 40px repeat(4, 34px);
+            grid-template-rows: 26px repeat(4, 30px) 34px; font-size: var(--t-xl); }
+  .cgrid i { font-style: normal; text-align: center; line-height: 30px; }
+  .cgrid i.d { color: var(--green); }
+  /* pulled right, into the empty thousands column, to sit near its number */
+  .cgrid i.op { position: relative; left: 18px; text-align: center; color: var(--ink); font-weight: 900; font-size: 28px; }
+  .cgrid i.last { border-bottom: 3.5px solid var(--ink); }
+  .cgrid i.lab, .cgrid i.cy { line-height: 19px; }
+  .cgrid i.lab { font-size: var(--t-xs); font-weight: 400; font-style: italic; color: var(--ink2);
+                  text-align: right; padding-right: 2px; }
+  /* carry boxes: small, so carries stay smaller than the digits */
+  .cgrid i.cy { margin: 1px 7px 4px; border: 2px dashed var(--rule); border-radius: 5px;
+                 font-size: var(--t-md); color: var(--red); }
+  .cgrid i.ans { margin: 4px 2px 0; border: 2.5px solid var(--green); border-radius: 7px;
+                  line-height: 26px; color: var(--red); }
+
+  /* ---------- worked example ---------- */
+  .finish { justify-content: center; }
+  .ex, .finish { flex-direction: column; gap: 2px; padding: 8px var(--s3); background: var(--wash); }
+  .exhead { font-size: var(--t-md); font-weight: 700; color: var(--maze); }
+  .exbody { display: flex; gap: var(--s2); align-items: center; flex: 1; }
+  .cgrid.small { flex: 0 0 auto; grid-template-columns: 26px repeat(4, 26px);
+                  grid-template-rows: 18px repeat(4, 26px) 32px; font-size: 19px; }
+  .cgrid.small i { line-height: 26px; }
+  .cgrid.small i.d { color: var(--faded); }
+  /* filled-in work is handwriting, so it differs from the printed digits by shape too, not only colour */
+  .cgrid.small i.cy, .cgrid.small i.ans { font-family: "Chalkboard SE", "Comic Sans MS", sans-serif; }
+  .cgrid.small i.op { color: var(--faded); }
+  .extag { margin-left: var(--s1); font-size: var(--t-xs); letter-spacing: .12em; color: #fff;
+            background: var(--ink2); border-radius: 999px; padding: 1px var(--s2); vertical-align: 2px; }
+  .cgrid.small i.op { font-size: 22px; left: 12px; }
+  .cgrid.small i.cy { margin: 1px 5px 2px; line-height: 13px; height: 15px; font-size: var(--t-sm); }
+  .cgrid.small i.ans { line-height: 24px; }
+  /* the thousands box is only for answers of 1,000 or more */
+  .cgrid i.ans.opt { border: 2px dashed var(--rule); }
+  .steps { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.25; }
+  .steps li { margin-bottom: 4px; }
+  .steps .grp { white-space: nowrap; }
+  .steps b { color: var(--maze); }
+
+  /* ---------- finish line ---------- */
+  .finish p { margin: 0; font-size: var(--t-sm); }
+  .lane { display: grid; grid-template-columns: 40px 1fr; grid-template-rows: 32px 32px;
+           column-gap: var(--s1); row-gap: 10px; margin-top: var(--s2); }
+  .lane .icon { width: 32px; height: 32px; display: block; }
+  .lane .start { grid-area: 1 / 1; }
+  .lane .end { grid-area: 2 / 1; }
+  .dots { grid-area: 1 / 2 / 3 / 3; position: relative; display: grid;
+           grid-template-columns: repeat(3, 1fr); grid-template-rows: 32px 32px; row-gap: 10px;
+           justify-items: center; align-items: center; }
+  /* the dashed track behind the dots, with a U-turn after dot 3 */
+  .dots::before { content: ""; position: absolute; left: -14px; right: 2px; top: 16px; bottom: 16px;
+                   border: 3px dashed var(--rule); border-left: none; border-radius: 0 26px 26px 0; }
+  .dot { position: relative; }
+  .dot { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--ink); background: #fff;
+          font-size: var(--t-xs); color: var(--ink2); display: flex; align-items: center;
+          justify-content: center; }
+  .score { margin-top: var(--s2); align-self: center; display: flex; align-items: baseline; gap: var(--s2);
+            font-size: var(--t-lg); color: var(--maze); font-weight: 700; }
+  .score span { display: inline-block; width: 46px; border-bottom: 3px dotted var(--rule); height: 24px; }
+
+  .footer { margin: var(--s3) 0 0; text-align: center; font-size: var(--t-md); color: var(--ink2); }
+
+  /* ---------- answer key ---------- */
+  .key table { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
+  .key th { text-align: left; font-size: var(--t-xs); color: var(--ink2); font-weight: 700;
+            padding: 0 var(--s2) var(--s1); border-bottom: 3px solid var(--maze); }
+  .key td { padding: 5px var(--s2); border-bottom: 1px solid var(--hair); vertical-align: top; }
+  .key td small { display: block; font-size: var(--t-xs); color: var(--ink2); font-style: italic; }
+  .key td.n { color: var(--maze); }
+  .key td.a { color: var(--green); font-size: var(--t-lg); text-align: right; }
+  .key th:last-child { text-align: right; }
+  .key tr.lv td { padding-top: var(--s3); font-weight: 700; color: var(--maze); border-bottom: none; }
+  .key tr.lv .icon { width: 20px; height: 20px; vertical-align: -4px; }
+  .tip { font-size: var(--t-sm); color: var(--ink2); margin: var(--s3) 0 0; line-height: 1.5; }
+</style></head>
+<body>
+
+<div class="page">
+<div class="banner">
+  <svg class="pacbig" viewBox="0 0 100 100" aria-label="Pac-Man">
+  <path d="M50,50 L93,27 A48,48 0 1,0 93,73 Z" fill="#FFD21F" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="50" cy="26" r="6" fill="#1B2A41"/></svg>
+  <div class="mid">
+    <h1>Pac-Man Addition Maze</h1>
+    <div class="fields"><div>Name: <span></span></div><div>Date: <span></span></div></div>
+  </div>
+  <div class="ghosts"><svg class="icon" viewBox="0 0 100 100" aria-label="ghost">
+  <path d="M10,92 L10,48 A40,40 0 0,1 90,48 L90,92 L77,80 L63,92 L50,80 L37,92 L23,80 Z"
+        fill="#E0322B" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <ellipse cx="35" cy="46" rx="11" ry="13" fill="#fff" stroke="#1B2A41" stroke-width="3"/>
+  <ellipse cx="65" cy="46" rx="11" ry="13" fill="#fff" stroke="#1B2A41" stroke-width="3"/>
+  <circle cx="39" cy="49" r="5" fill="#1B2A41"/><circle cx="69" cy="49" r="5" fill="#1B2A41"/></svg><svg class="icon" viewBox="0 0 100 100" aria-label="ghost">
+  <path d="M10,92 L10,48 A40,40 0 0,1 90,48 L90,92 L77,80 L63,92 L50,80 L37,92 L23,80 Z"
+        fill="#F7A1C4" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <ellipse cx="35" cy="46" rx="11" ry="13" fill="#fff" stroke="#1B2A41" stroke-width="3"/>
+  <ellipse cx="65" cy="46" rx="11" ry="13" fill="#fff" stroke="#1B2A41" stroke-width="3"/>
+  <circle cx="39" cy="49" r="5" fill="#1B2A41"/><circle cx="69" cy="49" r="5" fill="#1B2A41"/></svg></div>
+</div>
+<div class="probs"><div class="prob ex"><div class="exhead">Watch me first! <span class="extag">EXAMPLE</span></div>
+  <div class="exbody"><div class="cgrid small num"><i></i><i></i><i class="cy">1</i><i class="cy">2</i><i></i><i class="op"></i><i class="d"></i><i class="d">2</i><i class="d">4</i><i class="d">7</i><i class="op"></i><i class="d"></i><i class="d">1</i><i class="d">3</i><i class="d">5</i><i class="op"></i><i class="d"></i><i class="d">3</i><i class="d">1</i><i class="d">8</i><i class="op last">+</i><i class="d last"></i><i class="d last">1</i><i class="d last">2</i><i class="d last">6</i><i></i><i class="ans opt"></i><i class="ans">8</i><i class="ans">2</i><i class="ans">6</i></div>
+  <ol class="steps">
+    <li><b>Add the ones.</b> <span class="num grp">7 + 5 + 8 + 6 = 26</span></li>
+    <li><b>Write 6</b>, carry <b class="num">2</b> to the tens.</li>
+    <li><b>Tens, then hundreds.</b> Add the carry!</li>
+    <li><b>Check:</b> add again bottom up, then tick <b>I checked</b>.</li>
+  </ol></div></div><div class="prob"><div class="side">
+    <div class="pellet">1</div><svg class="icon" viewBox="0 0 100 100" aria-label="cherries">
+  <path d="M30,62 C40,30 55,18 78,10 M70,60 C68,40 72,24 78,10" fill="none" stroke="#2E6B2E" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="30" cy="70" r="18" fill="#E0322B" stroke="#1B2A41" stroke-width="5"/>
+  <circle cx="70" cy="68" r="18" fill="#E0322B" stroke="#1B2A41" stroke-width="5"/></svg><div class="lvl">Cherry</div>
+    <div class="chk"><span></span>I checked</div></div>
+  <div class="cgrid num"><i></i><i class="lab">carry</i><i class="cy"></i><i class="cy"></i><i></i><i class="op"></i><i class="d"></i><i class="d">1</i><i class="d">2</i><i class="d">5</i><i class="op"></i><i class="d"></i><i class="d">2</i><i class="d">3</i><i class="d">1</i><i class="op"></i><i class="d"></i><i class="d">4</i><i class="d">0</i><i class="d">2</i><i class="op last">+</i><i class="d last"></i><i class="d last">1</i><i class="d last">3</i><i class="d last">0</i><i></i><i class="ans opt"></i><i class="ans"></i><i class="ans"></i><i class="ans"></i></div></div><div class="prob"><div class="side">
+    <div class="pellet">2</div><svg class="icon" viewBox="0 0 100 100" aria-label="cherries">
+  <path d="M30,62 C40,30 55,18 78,10 M70,60 C68,40 72,24 78,10" fill="none" stroke="#2E6B2E" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="30" cy="70" r="18" fill="#E0322B" stroke="#1B2A41" stroke-width="5"/>
+  <circle cx="70" cy="68" r="18" fill="#E0322B" stroke="#1B2A41" stroke-width="5"/></svg><div class="lvl">Cherry</div>
+    <div class="chk"><span></span>I checked</div></div>
+  <div class="cgrid num"><i></i><i></i><i class="cy"></i><i class="cy"></i><i></i><i class="op"></i><i class="d"></i><i class="d">2</i><i class="d">1</i><i class="d">3</i><i class="op"></i><i class="d"></i><i class="d">1</i><i class="d">4</i><i class="d">2</i><i class="op"></i><i class="d"></i><i class="d">3</i><i class="d">2</i><i class="d">1</i><i class="op last">+</i><i class="d last"></i><i class="d last">1</i><i class="d last">0</i><i class="d last">4</i><i></i><i class="ans opt"></i><i class="ans"></i><i class="ans"></i><i class="ans"></i></div></div><div class="prob"><div class="side">
+    <div class="pellet">3</div><svg class="icon" viewBox="0 0 100 100" aria-label="strawberry">
+  <path d="M50,94 C22,74 14,52 20,36 C30,26 70,26 80,36 C86,52 78,74 50,94 Z" fill="#E0322B" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M26,34 L40,22 L50,32 L60,22 L74,34 Z" fill="#3E9B3E" stroke="#1B2A41" stroke-width="4" stroke-linejoin="round"/>
+  <g fill="#FFF3B0"><circle cx="38" cy="50" r="3.5"/><circle cx="60" cy="48" r="3.5"/><circle cx="48" cy="64" r="3.5"/>
+  <circle cx="34" cy="68" r="3.5"/><circle cx="64" cy="66" r="3.5"/><circle cx="50" cy="80" r="3.5"/></g></svg><div class="lvl">Strawberry</div>
+    <div class="chk"><span></span>I checked</div></div>
+  <div class="cgrid num"><i></i><i></i><i class="cy"></i><i class="cy"></i><i></i><i class="op"></i><i class="d"></i><i class="d">2</i><i class="d">5</i><i class="d">8</i><i class="op"></i><i class="d"></i><i class="d">3</i><i class="d">1</i><i class="d">4</i><i class="op"></i><i class="d"></i><i class="d">1</i><i class="d">2</i><i class="d">9</i><i class="op last">+</i><i class="d last"></i><i class="d last">1</i><i class="d last">6</i><i class="d last">3</i><i></i><i class="ans opt"></i><i class="ans"></i><i class="ans"></i><i class="ans"></i></div></div><div class="prob"><div class="side">
+    <div class="pellet">4</div><svg class="icon" viewBox="0 0 100 100" aria-label="strawberry">
+  <path d="M50,94 C22,74 14,52 20,36 C30,26 70,26 80,36 C86,52 78,74 50,94 Z" fill="#E0322B" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M26,34 L40,22 L50,32 L60,22 L74,34 Z" fill="#3E9B3E" stroke="#1B2A41" stroke-width="4" stroke-linejoin="round"/>
+  <g fill="#FFF3B0"><circle cx="38" cy="50" r="3.5"/><circle cx="60" cy="48" r="3.5"/><circle cx="48" cy="64" r="3.5"/>
+  <circle cx="34" cy="68" r="3.5"/><circle cx="64" cy="66" r="3.5"/><circle cx="50" cy="80" r="3.5"/></g></svg><div class="lvl">Strawberry</div>
+    <div class="chk"><span></span>I checked</div></div>
+  <div class="cgrid num"><i></i><i></i><i class="cy"></i><i class="cy"></i><i></i><i class="op"></i><i class="d"></i><i class="d">4</i><i class="d">0</i><i class="d">7</i><i class="op"></i><i class="d"></i><i class="d">2</i><i class="d">8</i><i class="d">5</i><i class="op"></i><i class="d"></i><i class="d">1</i><i class="d">3</i><i class="d">6</i><i class="op last">+</i><i class="d last"></i><i class="d last">2</i><i class="d last">1</i><i class="d last">9</i><i></i><i class="ans opt"></i><i class="ans"></i><i class="ans"></i><i class="ans"></i></div></div><div class="prob"><div class="side">
+    <div class="pellet">5</div><svg class="icon" viewBox="0 0 100 100" aria-label="ghost">
+  <path d="M10,92 L10,48 A40,40 0 0,1 90,48 L90,92 L77,80 L63,92 L50,80 L37,92 L23,80 Z"
+        fill="#3FC7E0" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <ellipse cx="35" cy="46" rx="11" ry="13" fill="#fff" stroke="#1B2A41" stroke-width="3"/>
+  <ellipse cx="65" cy="46" rx="11" ry="13" fill="#fff" stroke="#1B2A41" stroke-width="3"/>
+  <circle cx="39" cy="49" r="5" fill="#1B2A41"/><circle cx="69" cy="49" r="5" fill="#1B2A41"/></svg><div class="lvl">Ghost</div>
+    <div class="chk"><span></span>I checked</div></div>
+  <div class="cgrid num"><i></i><i></i><i class="cy"></i><i class="cy"></i><i></i><i class="op"></i><i class="d"></i><i class="d">3</i><i class="d">8</i><i class="d">9</i><i class="op"></i><i class="d"></i><i class="d">2</i><i class="d">7</i><i class="d">6</i><i class="op"></i><i class="d"></i><i class="d">4</i><i class="d">5</i><i class="d">1</i><i class="op last">+</i><i class="d last"></i><i class="d last">1</i><i class="d last">9</i><i class="d last">8</i><i></i><i class="ans opt"></i><i class="ans"></i><i class="ans"></i><i class="ans"></i></div></div><div class="prob"><div class="side">
+    <div class="pellet">6</div><svg class="icon" viewBox="0 0 100 100" aria-label="ghost">
+  <path d="M10,92 L10,48 A40,40 0 0,1 90,48 L90,92 L77,80 L63,92 L50,80 L37,92 L23,80 Z"
+        fill="#3FC7E0" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <ellipse cx="35" cy="46" rx="11" ry="13" fill="#fff" stroke="#1B2A41" stroke-width="3"/>
+  <ellipse cx="65" cy="46" rx="11" ry="13" fill="#fff" stroke="#1B2A41" stroke-width="3"/>
+  <circle cx="39" cy="49" r="5" fill="#1B2A41"/><circle cx="69" cy="49" r="5" fill="#1B2A41"/></svg><div class="lvl">Ghost</div>
+    <div class="chk"><span></span>I checked</div></div>
+  <div class="cgrid num"><i></i><i></i><i class="cy"></i><i class="cy"></i><i></i><i class="op"></i><i class="d"></i><i class="d">8</i><i class="d">6</i><i class="d">9</i><i class="op"></i><i class="d"></i><i class="d">5</i><i class="d">7</i><i class="d">8</i><i class="op"></i><i class="d"></i><i class="d">6</i><i class="d">9</i><i class="d">3</i><i class="op last">+</i><i class="d last"></i><i class="d last">7</i><i class="d last">4</i><i class="d last">5</i><i></i><i class="ans opt"></i><i class="ans"></i><i class="ans"></i><i class="ans"></i></div></div><div class="prob finish"><div class="exhead">Finish line!</div>
+  <p>Color in a dot for each problem you finish.</p>
+  <div class="lane"><span class="start"><svg class="icon" viewBox="0 0 100 100" aria-label="Pac-Man">
+  <path d="M50,50 L93,27 A48,48 0 1,0 93,73 Z" fill="#FFD21F" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="50" cy="26" r="6" fill="#1B2A41"/></svg></span><div class="dots"><span class="dot num">1</span><span class="dot num">2</span><span class="dot num">3</span><span class="dot num">6</span><span class="dot num">5</span><span class="dot num">4</span></div>
+  <span class="end"><svg class="icon" viewBox="0 0 100 100" aria-label="cherries">
+  <path d="M30,62 C40,30 55,18 78,10 M70,60 C68,40 72,24 78,10" fill="none" stroke="#2E6B2E" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="30" cy="70" r="18" fill="#E0322B" stroke="#1B2A41" stroke-width="5"/>
+  <circle cx="70" cy="68" r="18" fill="#E0322B" stroke="#1B2A41" stroke-width="5"/></svg></span></div>
+  <div class="score">Score <span></span><b class="num">/ 6</b></div></div></div>
+</div>
+
+<div class="page key">
+<div class="mini"><svg class="pacsm" viewBox="0 0 100 100" aria-label="Pac-Man">
+  <path d="M50,50 L93,27 A48,48 0 1,0 93,73 Z" fill="#FFD21F" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="50" cy="26" r="6" fill="#1B2A41"/></svg>
+  <h1>Answer Key</h1>
+  <div class="pg">For the grown-up</div>
+  
+</div>
+<table>
+  <thead><tr><th>#</th><th>Problem</th><th>Ones</th><th>Tens</th><th>Hundreds</th><th>Answer</th></tr></thead>
+  <tbody><tr class="lv"><td colspan="6"><svg class="icon" viewBox="0 0 100 100" aria-label="cherries">
+  <path d="M30,62 C40,30 55,18 78,10 M70,60 C68,40 72,24 78,10" fill="none" stroke="#2E6B2E" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="30" cy="70" r="18" fill="#E0322B" stroke="#1B2A41" stroke-width="5"/>
+  <circle cx="70" cy="68" r="18" fill="#E0322B" stroke="#1B2A41" stroke-width="5"/></svg> Cherry level</td></tr><tr><td class="n num">1</td>
+  <td class="num">125 + 231 + 402 + 130</td><td><span class="num">5+1+2+0 = 8</span><small>write 8</small></td><td><span class="num">2+3+0+3 = 8</span><small>write 8</small></td><td><span class="num">1+2+4+1 = 8</span><small>write 8</small></td>
+  <td class="a num">888</td></tr><tr><td class="n num">2</td>
+  <td class="num">213 + 142 + 321 + 104</td><td><span class="num">3+2+1+4 = 10</span><small>write 0, carry 1</small></td><td><span class="num">1+1+4+2+0 = 8</span><small>write 8</small></td><td><span class="num">2+1+3+1 = 7</span><small>write 7</small></td>
+  <td class="a num">780</td></tr><tr class="lv"><td colspan="6"><svg class="icon" viewBox="0 0 100 100" aria-label="strawberry">
+  <path d="M50,94 C22,74 14,52 20,36 C30,26 70,26 80,36 C86,52 78,74 50,94 Z" fill="#E0322B" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M26,34 L40,22 L50,32 L60,22 L74,34 Z" fill="#3E9B3E" stroke="#1B2A41" stroke-width="4" stroke-linejoin="round"/>
+  <g fill="#FFF3B0"><circle cx="38" cy="50" r="3.5"/><circle cx="60" cy="48" r="3.5"/><circle cx="48" cy="64" r="3.5"/>
+  <circle cx="34" cy="68" r="3.5"/><circle cx="64" cy="66" r="3.5"/><circle cx="50" cy="80" r="3.5"/></g></svg> Strawberry level</td></tr><tr><td class="n num">3</td>
+  <td class="num">258 + 314 + 129 + 163</td><td><span class="num">8+4+9+3 = 24</span><small>write 4, carry 2</small></td><td><span class="num">2+5+1+2+6 = 16</span><small>write 6, carry 1</small></td><td><span class="num">1+2+3+1+1 = 8</span><small>write 8</small></td>
+  <td class="a num">864</td></tr><tr><td class="n num">4</td>
+  <td class="num">407 + 285 + 136 + 219</td><td><span class="num">7+5+6+9 = 27</span><small>write 7, carry 2</small></td><td><span class="num">2+0+8+3+1 = 14</span><small>write 4, carry 1</small></td><td><span class="num">1+4+2+1+2 = 10</span><small>write 10 (1 thousand, 0 hundreds)</small></td>
+  <td class="a num">1,047</td></tr><tr class="lv"><td colspan="6"><svg class="icon" viewBox="0 0 100 100" aria-label="ghost">
+  <path d="M10,92 L10,48 A40,40 0 0,1 90,48 L90,92 L77,80 L63,92 L50,80 L37,92 L23,80 Z"
+        fill="#3FC7E0" stroke="#1B2A41" stroke-width="5" stroke-linejoin="round"/>
+  <ellipse cx="35" cy="46" rx="11" ry="13" fill="#fff" stroke="#1B2A41" stroke-width="3"/>
+  <ellipse cx="65" cy="46" rx="11" ry="13" fill="#fff" stroke="#1B2A41" stroke-width="3"/>
+  <circle cx="39" cy="49" r="5" fill="#1B2A41"/><circle cx="69" cy="49" r="5" fill="#1B2A41"/></svg> Ghost level</td></tr><tr><td class="n num">5</td>
+  <td class="num">389 + 276 + 451 + 198</td><td><span class="num">9+6+1+8 = 24</span><small>write 4, carry 2</small></td><td><span class="num">2+8+7+5+9 = 31</span><small>write 1, carry 3</small></td><td><span class="num">3+3+2+4+1 = 13</span><small>write 13 (1 thousand, 3 hundreds)</small></td>
+  <td class="a num">1,314</td></tr><tr><td class="n num">6</td>
+  <td class="num">869 + 578 + 693 + 745</td><td><span class="num">9+8+3+5 = 25</span><small>write 5, carry 2</small></td><td><span class="num">2+6+7+9+4 = 28</span><small>write 8, carry 2</small></td><td><span class="num">2+8+5+6+7 = 28</span><small>write 28 (2 thousands, 8 hundreds)</small></td>
+  <td class="a num">2,885</td></tr></tbody>
+</table>
+<p class="tip">Each column shows the digits added, with the carry from the column before it listed
+  first. The most common mistake is forgetting to add the carry, so an answer comes out 10 or 100
+  too small: find the first column where the work differs from this table.</p>
+</div>
+
+</body></html>

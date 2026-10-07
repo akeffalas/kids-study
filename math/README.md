@@ -1,12 +1,15 @@
-# Grade 5 maths worksheets
+# Maths worksheets
 
-Printable, themed Grade 5 maths worksheets, one folder per textbook chapter, built
-and quality-gated for greyscale print by the shared tooling in this directory.
+Printable, themed maths worksheets, built and quality-gated for greyscale print by
+the shared tooling in this directory. The Grade 5 sheets live in one folder per
+textbook chapter; Grade 3 sheets live under `grade-3/worksheet/`, one folder per
+topic.
 
 | Folder | Worksheets | Chapter |
 | --- | --- | --- |
 | `chapter-1/` | Hyrule Math Quest | Place value, decimals, Roman numerals, properties |
 | `chapter-2/` | Star Fox Math Mission, Star Fox Bonus Mission | Multiplication |
+| `grade-3/worksheet/add-large-numbers/` | Pac-Man Addition Maze | Adding four 3-digit numbers |
 
 **Hyrule Math Quest** is a pre-test: Roman numerals, place value to millions,
 decimals to thousandths, rounding, comparing and ordering, the properties of
@@ -18,6 +21,11 @@ digits, money, and a multi-step word problem. **Star Fox Bonus Mission** (3 page
 covers the test's hardest items: the Distributive Property as a strategy,
 choosing mental math or paper and pencil, multipliers ending in zeros, a 4-digit
 by 3-digit product, and cents-only money. Each ends with an answer key.
+
+**Pac-Man Addition Maze** (Grade 3, 2 pages) is six problems adding four 3-digit
+numbers in columns, ramping from no carrying to carries into the thousands, with
+a worked example and a finish-line tracker. Page 2 is the answer key, broken down
+column by column.
 
 Python 3.14, managed with uv.
 
@@ -46,6 +54,19 @@ uv run worksheet build --source chapter-2/starfox-math-review.html \
 uv run worksheet build --source chapter-2/starfox-bonus-mission.html \
                        --output chapter-2/StarFox-Bonus-Mission.pdf
 ```
+
+The Pac-Man sheet is generated: `generate.py` holds the problems, computes every
+answer and carry, and writes the HTML. Edit the script, never the HTML, then:
+
+```sh
+uv run python grade-3/worksheet/add-large-numbers/generate.py
+uv run worksheet build --source grade-3/worksheet/add-large-numbers/pacman-addition-maze.html \
+                       --output grade-3/worksheet/add-large-numbers/PacMan-Addition-Maze.pdf
+```
+
+The audit gates are not wired to it: like chapter 2, it would fail chapter 1's
+content and page-count checks. Its answer key cannot drift from its problems,
+because both are produced from the same numbers by the same run.
 
 ### What the gates cover for chapter 2
 
@@ -145,6 +166,10 @@ chapter-2/
   StarFox-Math-Mission.pdf
   starfox-bonus-mission.html  bonus worksheet
   StarFox-Bonus-Mission.pdf
+grade-3/worksheet/add-large-numbers/
+  generate.py                 the problems and answers (source of truth)
+  pacman-addition-maze.html   generated, do not edit
+  PacMan-Addition-Maze.pdf    build output
 worksheet/
   numerals.py             Roman numerals, place value, rounding, number names
   colors.py               sRGB and WCAG maths

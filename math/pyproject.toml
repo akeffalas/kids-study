@@ -79,6 +79,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # The CLI's whole job is to talk to a terminal.
 "worksheet/__main__.py" = ["T20"]
+# Worksheet generators embed their stylesheet and SVG artwork as template text.
+"grade-3/**/generate.py" = ["E501"]
 # Tests get names that read as sentences, and asserts are the point.
 "tests/*" = [
     "D100", "D103", "S101", "ANN", "PLR2004", "SLF001", "S603", "S607",
