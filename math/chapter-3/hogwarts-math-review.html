@@ -1,0 +1,617 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Hogwarts Division Review</title>
+<style>
+  /* ============================================================
+     DESIGN TOKENS - every rule below resolves to these.
+     Token names are shared with the Hyrule and Star Fox worksheets
+     so the same print contract (worksheet/spec.py) applies here.
+     Illustration SVGs keep their own literal colors.
+     ============================================================ */
+  :root {
+    /* type ramp - 6 steps */
+    --t-xs: 11px; --t-sm: 13px; --t-md: 15px;
+    --t-lg: 18px; --t-xl: 22px; --t-display: 28px;
+    /* spacing scale - 5 steps */
+    --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px; --s5: 32px;
+    /* stroke weights - 3 steps */
+    --k1: 2px; --k2: 3px; --k3: 4px;
+    /* grid: 12 cols over a 675px body column. prose 10, data 12. */
+    --w-prose: 563px; --w-data: 675px;
+    /* color - 13 tokens */
+    --ink:     #1F1A17;  /* body text             */
+    --ink2:    #4D4339;  /* secondary / italic    */
+    --title:   #5A1414;  /* headings, badges      */
+    --label:   #7A5A0E;  /* sub-labels (gold-brown, apart from the reds) */
+    --rule:    #7D705F;  /* dotted rules, boxes   */
+    --gold:    #8C6A12;  /* container borders     */
+    --gold-hi: #E3B23C;  /* accents, badge ring   */
+    --green:   #0F5C3A;  /* MATH VALUES ONLY      */
+    --red:     #A8321A;  /* directives            */
+    --paper1:  #FBF5E6;  /* banner gradient start */
+    --paper2:  #EFE2C4;  /* banner gradient end   */
+    --paper3:  #FDFAF2;  /* tinted fill           */
+    --tint:    #FFF8EC;  /* quest wash            */
+  }
+
+  @page { size: letter; margin: 0.38in 0.5in; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Chalkboard SE", "Comic Sans MS", "Marker Felt", sans-serif;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .num { font-family: "Avenir Next", "Helvetica Neue", Helvetica, sans-serif;
+         font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  /* ---------- page 1 banner ---------- */
+  .banner {
+    position: relative; border: 5px solid var(--gold); border-radius: 18px;
+    background: linear-gradient(135deg,var(--paper1) 0%, var(--paper2) 100%);
+    padding: var(--s3) 176px var(--s3) 124px; margin-bottom: var(--s3);
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .banner h1 { margin: 0 0 var(--s1); font-size: var(--t-display); color: var(--title);
+               line-height: 1.12; }
+  .banner .sub { font-size: var(--t-sm); color: var(--ink2); margin: 0 0 var(--s3); }
+  .banner .tri { position: absolute; left: var(--s3); top: 50%;
+                 transform: translateY(-50%); width: 96px; height: 80px; }
+  .banner .shd { position: absolute; right: var(--s3); top: 50%;
+                 transform: translateY(-50%); width: 70px; height: 76px; }
+  .fields { display: flex; gap: var(--s4); font-size: var(--t-sm); color: var(--ink2);
+            max-width: var(--w-prose); }
+  .fields div { display: flex; align-items: baseline; gap: var(--s2); }
+  .fields div:first-child { flex: 1; }
+  .fields span { flex: 1; border-bottom: 2.5px dotted var(--rule); min-width: 90px; }
+  .fields div:last-child span { min-width: 104px; }
+  .banner .score { position: absolute; right: 94px; top: 50%; transform: translateY(-50%);
+                   width: 84px; height: 84px; border-radius: 50%;
+                   border: var(--k2) solid var(--gold); background: #fff;
+                   display: flex; flex-direction: column; align-items: center;
+                   justify-content: center; font-size: var(--t-xs); color: var(--ink2);
+                   text-align: center; line-height: 1.1; }
+  .banner .score .num { font-size: var(--t-md); color: var(--title); }
+  .banner .score span { display: inline-block; width: 42px; height: 20px;
+                        border-bottom: 2.5px dotted var(--rule); }
+
+  /* ---------- running header ---------- */
+  .mini { display: flex; align-items: center; gap: var(--s3);
+          border: var(--k3) solid var(--gold); border-radius: 15px;
+          background: linear-gradient(135deg,var(--paper1) 0%, var(--paper2) 100%);
+          padding: var(--s2) var(--s3); margin-bottom: var(--s3); }
+  .mini h1 { margin: 0; font-size: var(--t-lg); color: var(--title); }
+  .mini .pg { margin-left: auto; font-size: var(--t-sm); color: var(--ink2);
+              font-style: italic; }
+  .mini .mname { font-size: var(--t-sm); color: var(--ink2); white-space: nowrap; }
+  .mini .mname span { display: inline-block; border-bottom: 2.5px dotted var(--rule);
+                      min-width: 128px; }
+  .mini svg { flex: 0 0 auto; }
+
+  /* ---------- problem shell ---------- */
+  .p { display: flex; gap: var(--s3); margin-bottom: var(--s3);
+       page-break-inside: avoid; }
+  .badge { flex: 0 0 33px; height: 33px; border-radius: 50%; background: var(--title);
+           color: #fff; font-size: var(--t-lg); font-weight: 700; display: flex;
+           align-items: center; justify-content: center;
+           border: var(--k2) solid var(--gold-hi); }
+  .body { flex: 1; padding-top: 1px; }
+  .q { font-size: var(--t-md); line-height: 1.45; margin: 0; max-width: var(--w-prose); }
+  .q .big { font-size: var(--t-xl); color: var(--green); }
+  .q .val { color: var(--green); }
+  /* unused here; kept so the shared print contract (worksheet/spec.py) still binds */
+  .bank .chip { border: 2.5px solid var(--rule); border-radius: 999px;
+                background: var(--paper3); padding: var(--s1) var(--s3);
+                font-size: var(--t-sm); color: var(--ink); font-weight: 700; }
+  /* bold red prints near-black against the grey body text, so no underline is needed */
+  .ask { color: var(--red); font-weight: 700; }
+  .grp { white-space: nowrap; }
+
+  .sub2 { display: flex; align-items: baseline; gap: var(--s2); font-size: var(--t-md);
+          margin: var(--s2) 0 0; max-width: var(--w-data); line-height: 1.5; }
+  .sub2 .lbl { flex: 0 0 15px; color: var(--label); font-weight: 700; }
+  .sub2 .txt { flex: 1; }
+  /* the last writing line ends in the answer box: work first, answer last */
+  .arow { display: flex; align-items: flex-end; gap: var(--s3); max-width: var(--w-data);
+          margin-bottom: var(--s2); }
+  .arow .line { flex: 1; }
+  .sans { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-md);
+          color: var(--ink2); font-weight: 700; }
+  .sans .bx { margin: 0; }
+
+  /* AFFORDANCE 1 - rule, for words and sentences */
+  .line { border-bottom: 2.5px dotted var(--rule); height: var(--s5);
+          max-width: var(--w-data); }
+  .blank { display: inline-block; border-bottom: 2.5px dotted var(--rule);
+           min-width: 140px; height: var(--s4); vertical-align: -3px; }
+
+  /* AFFORDANCE 2 - box, for a single short value. 34px clears a child's pencil. */
+  .bx { display: inline-block; height: 34px; min-width: 74px;
+        border: 2.5px dotted var(--rule); border-radius: 9px; background: #fff;
+        vertical-align: -11px; margin: 0 var(--s1); }
+  .bx.sm { min-width: 46px; }
+  .bx.lg { min-width: 100px; margin: 0; }
+  .bx.tall { height: 44px; min-width: 150px; margin: 0; }
+  /* solid green = a final answer; dotted = working or an in-between value */
+  .bx.ans { border: var(--k2) solid var(--green); }
+
+  /* ---------- table: spans the body column, same right edge as the cards ---------- */
+  table { border-collapse: collapse; margin: var(--s2) 0 0;
+          width: 100%; table-layout: fixed; }
+  th, td { border: 2.5px solid var(--ink2); padding: var(--s1) var(--s2);
+           font-size: var(--t-lg); text-align: center;
+           color: var(--green); height: 40px; }
+  th { background: var(--paper2); color: var(--title); font-size: var(--t-sm);
+       height: auto; border-bottom-width: 4px; }
+  td.fill { background: var(--paper3); }
+  th.rowh { width: 112px; }
+  .dsum { width: 86px; }
+
+  /* ---------- cards ---------- */
+  .cardrow { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+             margin-top: var(--s3); max-width: var(--w-data); }
+  .card { display: flex; align-items: center; gap: var(--s1);
+          border: var(--k2) solid var(--rule); border-radius: 12px; background: #fff;
+          padding: var(--s2) var(--s3); font-size: var(--t-lg); color: var(--green); }
+  .card .lbl { font-size: var(--t-md); color: var(--label); margin-right: var(--s1);
+               position: relative; top: 2px; }
+  .card .bx { margin-top: 0; margin-bottom: 0; vertical-align: middle; }
+  .cardrow.grid2 { display: grid; grid-template-columns: 1fr 1fr; max-width: var(--w-data); }
+  .card .eq { margin-left: auto; display: flex; align-items: center; gap: var(--s1); }
+  .est { display: flex; align-items: center; gap: var(--s2); margin: var(--s2) 0 0 23px;
+         font-size: var(--t-lg); color: var(--green); }
+
+  /* ---------- work areas ---------- */
+  .pad { border: 2.5px dashed var(--rule); border-radius: 11px; background: #fff;
+         position: relative; }
+  .pad span { position: absolute; top: var(--s1); left: var(--s3); font-size: var(--t-sm);
+              color: var(--ink2); }
+  .pad .plbl { font-size: var(--t-md); font-style: normal; font-weight: 700;
+               color: var(--label); }
+  .work { display: flex; gap: var(--s3); align-items: stretch; margin-top: var(--s2);
+          max-width: var(--w-data); }
+  .work .pad { flex: 1; height: 230px; }
+  .work.sm .pad { height: 150px; }
+  .work.md .pad { height: 150px; }
+  .work .ansbox { flex: 0 0 176px; display: flex; flex-direction: column;
+                  justify-content: flex-end; }
+  .work .ansbox .lab { font-size: var(--t-md); color: var(--ink2); font-weight: 700;
+                       margin-bottom: var(--s1); }
+  .pair { display: flex; gap: var(--s3); margin-top: var(--s2); max-width: var(--w-data); }
+  .pair .col { flex: 1; display: flex; flex-direction: column; }
+  .pair .work { flex: 1; margin-top: 0; }
+  .pair .work.sm .pad { height: 180px; }
+  .p .line { height: 28px; }
+  /* the check: quotient x divisor + remainder = dividend */
+  .chk { display: flex; align-items: center; gap: var(--s1); margin-top: var(--s2);
+         font-size: var(--t-lg); color: var(--green); }
+  .chk .cl { font-size: var(--t-md); color: var(--ink2); margin-right: var(--s1); }
+  .chk .bx { margin: 0; min-width: 62px; }
+  .chk .bx.sm { min-width: 46px; }
+  .tip { font-size: var(--t-md); color: var(--ink2); margin: var(--s1) 0 0;
+         max-width: var(--w-prose); line-height: 1.45; }
+  .tip b { color: var(--label); }
+  .pair .work .ansbox { flex: 0 0 110px; }
+  .pair .bx.tall { min-width: 110px; }
+
+  /* a division problem written with the bracket, the way the student will work it */
+  .ldiv { position: absolute; top: 34px; left: 48px; font-size: var(--t-xl);
+          color: var(--green); display: flex; align-items: flex-start; }
+  .ldiv .dvsr { padding: 6px var(--s2) 0 0; }
+  .ldiv .dvnd { border-top: var(--k2) solid var(--ink); border-left: var(--k2) solid var(--ink);
+                border-top-left-radius: 14px; padding: 4px var(--s2) 0 var(--s3); }
+
+  /* ---------- remainder quests: 2 x 2 grid ---------- */
+  .intro { border-left: var(--k3) solid var(--gold); border-radius: 0 10px 10px 0;
+           background: var(--paper1); padding: var(--s2) var(--s3); margin-bottom: var(--s3);
+           font-size: var(--t-md); line-height: 1.45; }
+  .intro b { color: var(--title); }
+  .quests { display: flex; flex-direction: column; gap: var(--s3); }
+  .quest { border: var(--k3) solid var(--gold); border-radius: 16px; background: var(--tint);
+           padding: var(--s3); page-break-inside: avoid; display: grid;
+           grid-template-columns: 290px 1fr; grid-template-areas: "side pad" "why why";
+           column-gap: var(--s3); row-gap: var(--s2); }
+  .quest .qside { grid-area: side; }
+  .quest .qwhy { grid-area: why; }
+  .quest h2 { margin: 0 0 var(--s2); font-size: var(--t-lg); color: var(--title);
+              display: flex; align-items: center; gap: var(--s2); }
+  .quest h2 .badge { flex: 0 0 30px; height: 30px; font-size: var(--t-md); }
+  .quest .q { font-size: var(--t-md); max-width: none; margin: 0 0 var(--s1); }
+  .quest .pad { grid-area: pad; min-height: 240px; }
+  /* page 4 has no intro box, so the hardest divisions get its spare height */
+  .quests.roomy .quest .pad { min-height: 290px; }
+  .quest .ldiv { top: 34px; left: 40px; }
+  .qrow { display: flex; align-items: center; gap: var(--s2); margin-top: var(--s2);
+          font-size: var(--t-md); color: var(--ink2); font-weight: 700; }
+  .qrow .bx { margin: 0; min-width: 70px; }
+  .qrow .bx.sm { min-width: 46px; }
+  .qrow .unit { font-weight: 400; color: var(--ink); }
+  .pick { display: inline-flex; align-items: center; gap: var(--s1); font-weight: 400;
+          color: var(--ink); }
+  .pick i { display: inline-block; width: 16px; height: 16px; border: 2.5px solid var(--rule);
+            border-radius: 4px; background: #fff; }
+  /* solid green = the ONE final-answer treatment */
+  .fin { border: var(--k2) solid var(--green); border-radius: 10px; background: #fff;
+         height: 34px; flex: 1; }
+  .quest .line { height: 30px; max-width: none; }
+  .qwhy .qrow { margin-top: 0; }
+  .qwhy .qrow .wl { flex: 1; height: 26px; border-bottom: 2.5px dotted var(--rule); }
+
+  .page.first .p { margin-bottom: var(--s5); }
+  .footer { margin-top: var(--s3); text-align: center; font-size: var(--t-sm);
+            color: var(--ink2); }
+
+  /* ---------- answer key ---------- */
+  .key h1 { font-size: var(--t-lg); color: var(--title); margin: 0; }
+  .keybox { border: var(--k2) solid var(--gold); border-radius: 16px;
+            background: var(--paper3); padding: var(--s2) var(--s4) var(--s3); }
+  .key ol { font-size: var(--t-sm); line-height: 1.5; padding-left: var(--s4); margin: 0; }
+  .key ol > li { margin-bottom: var(--s2); }
+  .key .a { color: var(--green); font-weight: 700; }
+  .key .why { color: var(--ink2); font-size: var(--t-sm); font-style: italic; }
+  .key .why.num { font-weight: 400; font-style: normal; }
+  .key ul { margin: 2px 0 var(--s1); padding-left: var(--s3); font-size: var(--t-sm);
+            line-height: 1.45; list-style: none; }
+  .key .ref { color: var(--label); font-size: var(--t-xs); font-weight: 700;
+              margin-left: var(--s2); }
+</style></head>
+<body>
+
+<!-- ============================ PAGE 1 ============================ -->
+<div class="page first">
+
+<div class="banner">
+  <!-- a winged golden ball -->
+  <svg class="tri" viewBox="0 0 200 160" aria-label="winged golden ball">
+    <g stroke="#2E2418" stroke-width="3.3" stroke-linejoin="round">
+      <path d="M78,78 C56,46 22,40 6,52 C22,58 30,66 34,74 C20,74 12,82 10,92
+               C30,84 52,88 78,90 Z" fill="#F4EEDD"/>
+      <path d="M122,78 C144,46 178,40 194,52 C178,58 170,66 166,74 C180,74 188,82 190,92
+               C170,84 148,88 122,90 Z" fill="#F4EEDD"/>
+      <circle cx="100" cy="84" r="26" fill="#E3B23C"/>
+      <path d="M80,72 C92,80 108,80 120,72 M80,96 C92,88 108,88 120,96" fill="none"
+            stroke-width="2.5"/>
+    </g>
+  </svg>
+
+  <!-- a lightning bolt with stars -->
+  <svg class="shd" viewBox="0 0 200 220" aria-label="lightning bolt">
+    <g stroke="#2E2418" stroke-width="5" stroke-linejoin="round">
+      <path d="M118,8 L52,118 L96,118 L70,212 L150,90 L104,90 L136,8 Z" fill="#E3B23C"/>
+      <path d="M30,30 L35,45 L50,50 L35,55 L30,70 L25,55 L10,50 L25,45 Z" fill="#F4EEDD"/>
+      <path d="M176,150 L179,160 L189,163 L179,166 L176,176 L173,166 L163,163 L173,160 Z"
+            fill="#F4EEDD"/>
+    </g>
+  </svg>
+
+  <h1>Hogwarts Division Review</h1>
+  <p class="sub">Grade 5 Chapter 3 Review &#9679; Division &#9679; Page 1 of 4</p>
+  <div class="fields">
+    <div>Wizard's Name: <span></span></div>
+    <div>Date: <span></span></div>
+  </div>
+  <div class="score">House<br>Points<div class="num"><span></span>/10</div></div>
+</div>
+
+<div class="p"><div class="badge">1</div><div class="body">
+  <p class="q">At Gringotts, a goblin stacks <b class="num val grp">54 Galleons</b> into
+     <b class="num val">6</b> equal piles: <b class="num val grp">54 &divide; 6 = 9</b>.
+     <span class="ask">Use the pattern to find each quotient.</span></p>
+  <div class="cardrow grid2 num">
+    <div class="card"><span class="lbl">a.</span>540 &divide; 6<span class="eq">= <span class="bx lg ans"></span></span></div>
+    <div class="card"><span class="lbl">b.</span>5,400 &divide; 6<span class="eq">= <span class="bx lg ans"></span></span></div>
+    <div class="card"><span class="lbl">c.</span>54,000 &divide; 6<span class="eq">= <span class="bx lg ans"></span></span></div>
+    <div class="card"><span class="lbl">d.</span>4,200 &divide; 70<span class="eq">= <span class="bx lg ans"></span></span></div>
+  </div>
+</div></div>
+
+<div class="p"><div class="badge">2</div><div class="body">
+  <p class="q">Griphook checks which numbers each vault number can be divided by evenly.
+     <span class="ask">Add up the digits first. Then write Y (yes) or N (no) for each rule.</span></p>
+  <table class="num">
+    <tr><th class="rowh">Vault number</th><th class="dsum">Digit sum</th><th>&divide; 2</th><th>&divide; 3</th><th>&divide; 4</th>
+        <th>&divide; 5</th><th>&divide; 6</th><th>&divide; 9</th><th>&divide; 10</th></tr>
+    <tr><td class="fill">687</td><td class="dsum"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="fill">1,260</td><td class="dsum"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="fill">4,716</td><td class="dsum"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  </table>
+</div></div>
+
+<div class="p"><div class="badge">3</div><div class="body">
+  <p class="q">The trolley on the Hogwarts Express sells <b class="num val">2,738</b>
+     Chocolate Frogs on <b class="num val">7</b> trips, the same number each trip.</p>
+  <p class="sub2"><span class="lbl">a.</span><span class="txt">
+     <span class="ask">Use compatible numbers</span> to estimate how many frogs each trip:</span></p>
+  <div class="est num"><span class="bx lg"></span> &divide;
+     <span class="bx lg"></span> = <span class="bx lg ans"></span></div>
+  <p class="sub2"><span class="lbl">b.</span><span class="txt">Ron says the exact answer is
+     <b class="num">39 R1</b> frogs. Use your estimate to explain why Ron is wrong.</span></p>
+  <div class="line"></div>
+  <div class="line"></div>
+  <div class="line"></div>
+</div></div>
+
+<p class="footer">&#9670; Ten points to your house! &#9679; turn the page &#9670;</p>
+</div>
+
+<!-- ============================ PAGE 2 ============================ -->
+<div class="page">
+
+<div class="mini">
+  <svg width="26" height="30" viewBox="0 0 200 220" aria-label="lightning bolt">
+    <path d="M118,8 L52,118 L96,118 L70,212 L150,90 L104,90 L136,8 Z" fill="#E3B23C"
+          stroke="#2E2418" stroke-width="10" stroke-linejoin="round"/>
+  </svg>
+  <h1>Hogwarts Division Review</h1>
+  <div class="pg">Page 2 of 4</div>
+  <div class="mname">Name: <span></span></div>
+</div>
+
+<div class="p"><div class="badge">4</div><div class="body">
+  <p class="q">Order of operations! Professor McGonagall writes two puzzles on the board.
+     <span class="ask">Simplify each one. Show every step.</span></p>
+  <p class="tip"><b>Remember:</b> ( ) first, then &times; &divide; left to right, then + &minus; left to right.</p>
+  <p class="sub2"><span class="lbl">a.</span><span class="txt num">48 &divide; (2 + 6) &times; 3 &minus; 4</span></p>
+  <div class="line"></div>
+  <div class="arow"><div class="line"></div><span class="sans">Answer <span class="bx ans"></span></span></div>
+  <p class="sub2"><span class="lbl">b.</span><span class="txt"><span class="num">36 &minus; 18 &divide; 3 &times; 2 + (7 &minus; 2)</span>
+     <br>Draco worked left to right and got <b class="num">17</b>.
+     Find the right answer.</span></p>
+  <div class="line"></div>
+  <div class="line"></div>
+  <div class="arow"><div class="line"></div><span class="sans">Answer <span class="bx ans"></span></span></div>
+</div></div>
+
+<div class="p"><div class="badge">5</div><div class="body">
+  <p class="q">Hagrid plants <b class="num val">4,839</b> pumpkin seeds in <b class="num val">6</b>
+     equal rows, then <b class="num val">3,248</b> seeds in <b class="num val">8</b> rows. Watch for zeros!
+     <span class="ask">Find each quotient and remainder, then check by multiplying.</span></p>
+  <div class="pair">
+    <div class="col">
+      <div class="work sm">
+        <div class="pad"><span class="plbl">a.</span>
+          <div class="ldiv num"><div class="dvsr">6</div><div class="dvnd">4,839</div></div></div>
+        <div class="ansbox"><div class="lab">Answer</div><div class="bx tall ans"></div></div>
+      </div>
+      <div class="chk num"><span class="cl">Check:</span><span class="bx sm"></span>&times;<span class="bx sm"></span>+<span class="bx sm"></span>=<span class="bx"></span></div>
+    </div>
+    <div class="col">
+      <div class="work sm">
+        <div class="pad"><span class="plbl">b.</span>
+          <div class="ldiv num"><div class="dvsr">8</div><div class="dvnd">3,248</div></div></div>
+        <div class="ansbox"><div class="lab">Answer</div><div class="bx tall ans"></div></div>
+      </div>
+      <div class="chk num"><span class="cl">Check:</span><span class="bx sm"></span>&times;<span class="bx sm"></span>+<span class="bx sm"></span>=<span class="bx"></span></div>
+    </div>
+  </div>
+</div></div>
+
+<div class="p"><div class="badge">6</div><div class="body">
+  <p class="q">Uncle Vernon spends <b class="num val">$183.15</b> on Dudley's
+     <b class="num val">37</b> birthday presents. Each present costs the same.
+     <span class="ask">How much does each present cost?</span>
+     <br>Remember the $ and the decimal point!</p>
+  <div class="work md">
+    <div class="pad"><span>Show your work</span>
+      <div class="ldiv num"><div class="dvsr">37</div><div class="dvnd">$183.15</div></div></div>
+    <div class="ansbox"><div class="lab">Answer</div><div class="bx tall ans"></div></div>
+  </div>
+</div></div>
+
+<p class="footer">&#9670; Brilliant! &#9679; now for the Remainder Riddles &#9670;</p>
+</div>
+
+<!-- ============================ PAGE 3 ============================ -->
+<div class="page">
+
+<div class="mini">
+  <svg width="26" height="30" viewBox="0 0 200 220" aria-label="lightning bolt">
+    <path d="M118,8 L52,118 L96,118 L70,212 L150,90 L104,90 L136,8 Z" fill="#E3B23C"
+          stroke="#2E2418" stroke-width="10" stroke-linejoin="round"/>
+  </svg>
+  <h1>Hogwarts Division Review</h1>
+  <div class="pg">Page 3 of 4</div>
+  <div class="mname">Name: <span></span></div>
+</div>
+
+<div class="intro"><b>Remainder Riddles.</b> Every one of these has a remainder. Read each
+  story carefully and decide what the remainder means for the answer.
+  <br><b>Check:</b> your remainder must always be smaller than the divisor.</div>
+
+<div class="quests">
+  <div class="quest">
+    <div class="qside">
+      <h2><span class="badge">7</span>Across the Lake</h2>
+      <p class="q">Hagrid leads <b class="num val">103</b> first-years down to the lake. Each
+        boat holds <b class="num val">4</b> students.
+        <span class="ask">How many boats do the first-years need?</span></p>
+      <div class="qrow">Quotient <span class="bx"></span> R <span class="bx sm"></span></div>
+      <div class="qrow">Answer <div class="fin"></div><span class="unit">boats</span></div>
+    </div>
+    <div class="pad"><span>Show your work</span>
+      <div class="ldiv num"><div class="dvsr">4</div><div class="dvnd">103</div></div></div>
+    <div class="qwhy">
+      <div class="qrow">I rounded <span class="pick"><i></i> up</span>
+        <span class="pick"><i></i> down</span> because <span class="wl"></span></div>
+      <div class="line"></div>
+      <div class="line"></div>
+    </div>
+  </div>
+
+  <div class="quest">
+    <div class="qside">
+      <h2><span class="badge">8</span>Potions with Snape</h2>
+      <p class="q">One batch of Cure for Boils uses <b class="num val">12</b> snake fangs.
+        Neville has <b class="num val">315</b> fangs.
+        <span class="ask">How many batches can he brew?</span></p>
+      <div class="qrow">Quotient <span class="bx"></span> R <span class="bx sm"></span></div>
+      <div class="qrow">Answer <div class="fin"></div><span class="unit">batches</span></div>
+    </div>
+    <div class="pad"><span>Show your work</span>
+      <div class="ldiv num"><div class="dvsr">12</div><div class="dvnd">315</div></div></div>
+    <div class="qwhy">
+      <div class="qrow">I rounded <span class="pick"><i></i> up</span>
+        <span class="pick"><i></i> down</span> because <span class="wl"></span></div>
+      <div class="line"></div>
+      <div class="line"></div>
+    </div>
+  </div>
+</div>
+
+<p class="footer">&#9670; Halfway there &#9679; two more riddles &#9670;</p>
+</div>
+
+<!-- ============================ PAGE 4 ============================ -->
+<div class="page">
+
+<div class="mini">
+  <svg width="26" height="30" viewBox="0 0 200 220" aria-label="lightning bolt">
+    <path d="M118,8 L52,118 L96,118 L70,212 L150,90 L104,90 L136,8 Z" fill="#E3B23C"
+          stroke="#2E2418" stroke-width="10" stroke-linejoin="round"/>
+  </svg>
+  <h1>Hogwarts Division Review</h1>
+  <div class="pg">Page 4 of 4</div>
+  <div class="mname">Name: <span></span></div>
+</div>
+
+<div class="quests roomy">
+  <div class="quest">
+    <div class="qside">
+      <h2><span class="badge">9</span>Every Flavor Beans</h2>
+      <p class="q">The trolley witch has <b class="num val">1,150</b> jelly beans. She packs
+        <b class="num val">24</b> beans into each box.
+        <br><span class="ask">a. How many boxes can she fill?</span>
+        <br><span class="ask">b. How many beans are left over?</span></p>
+      <div class="qrow">Quotient <span class="bx"></span> R <span class="bx sm"></span></div>
+      <div class="qrow">a. Answer <div class="fin"></div><span class="unit">boxes</span></div>
+      <div class="qrow">b. Left over <div class="fin"></div><span class="unit">beans</span></div>
+    </div>
+    <div class="pad"><span>Show your work</span>
+      <div class="ldiv num"><div class="dvsr">24</div><div class="dvnd">1,150</div></div></div>
+    <div class="qwhy">
+      <div class="qrow">I rounded <span class="pick"><i></i> up</span>
+        <span class="pick"><i></i> down</span> because <span class="wl"></span></div>
+      <div class="line"></div>
+      <div class="line"></div>
+    </div>
+  </div>
+
+  <div class="quest">
+    <div class="qside">
+      <h2><span class="badge">10</span>The Great Hall Candles</h2>
+      <p class="q">Filch needs <b class="num val">20,000</b> floating candles for the
+        Welcome Feast. The shop in Hogsmeade sells candles in boxes of <b class="num val">36</b>.
+        <span class="ask">How many boxes should he buy?</span></p>
+      <div class="qrow">Quotient <span class="bx"></span> R <span class="bx sm"></span></div>
+      <div class="qrow">Answer <div class="fin"></div><span class="unit">boxes</span></div>
+    </div>
+    <div class="pad"><span>Show your work</span>
+      <div class="ldiv num"><div class="dvsr">36</div><div class="dvnd">20,000</div></div></div>
+    <div class="qwhy">
+      <div class="qrow">I rounded <span class="pick"><i></i> up</span>
+        <span class="pick"><i></i> down</span> because <span class="wl"></span></div>
+      <div class="line"></div>
+      <div class="line"></div>
+    </div>
+  </div>
+</div>
+
+<p class="footer">&#9670; Mischief managed! &#9670;</p>
+</div>
+
+<!-- ============================ PAGE 5: ANSWER KEY ============================ -->
+<div class="page key">
+
+<div class="mini">
+  <svg width="26" height="30" viewBox="0 0 200 220" aria-label="lightning bolt">
+    <path d="M118,8 L52,118 L96,118 L70,212 L150,90 L104,90 L136,8 Z" fill="#E3B23C"
+          stroke="#2E2418" stroke-width="10" stroke-linejoin="round"/>
+  </svg>
+  <h1>Answer Key</h1>
+  <div class="pg">For grown-ups only: not part of the student pages</div>
+</div>
+
+<div class="keybox">
+<ol>
+  <li>Patterns: <span class="a num">90</span>, <span class="a num">900</span>,
+    <span class="a num">9,000</span>, then 4,200 &divide; 70 = <span class="a num">60</span>
+    <span class="ref">Lessons 3-1 and 3-2, pp. 96&ndash;99</span>
+    <br><span class="why">Use the basic fact, then count zeros. In part d, cross off one zero
+      from each number (420 &divide; 7 = 60). Watch for 600, which comes from forgetting the
+      zero in 70.</span></li>
+
+  <li>Divisibility: <span class="ref">Lessons 3-7 and 3-8, pp. 108&ndash;111</span>
+    <ul>
+      <li>687: digit sum <span class="a num">21</span>; <span class="a">only &divide; 3 is Y</span>
+          <span class="why">(21 is not divisible by 9; odd, so no 2, 4, 6)</span></li>
+      <li>1,260: digit sum <span class="a num">9</span>; <span class="a">all Y</span>
+          <span class="why">(ends in 0; 60 &divide; 4 = 15; even and &divide; 3, so &divide; 6)</span></li>
+      <li>4,716: digit sum <span class="a num">18</span>; <span class="a">Y for 2, 3, 4, 6, 9</span>; <span class="a">N for 5, 10</span>
+          <span class="why">(16 &divide; 4 = 4; 18 is divisible by 9; ends in 6)</span></li>
+    </ul>
+  </li>
+
+  <li>Compatible numbers: <span class="ref">Lesson 3-9, p. 112</span>
+    <ul>
+      <li>a. <span class="a num">2,800 &divide; 7 = 400</span> frogs
+          <span class="why">(28 is a basic fact with 7)</span></li>
+      <li>b. <span class="a">39 is far too small.</span> The estimate is about 400, so the answer
+          needs three digits. <span class="why">(The exact answer is 391 R1. Ron's quotient is
+          missing a digit.)</span></li>
+    </ul>
+  </li>
+
+  <li>Order of operations: <span class="ref">Lesson 3-14, p. 122</span>
+    <ul>
+      <li>a. <span class="why num">48 &divide; 8 &times; 3 &minus; 4 &rarr; 6 &times; 3 &minus; 4
+          &rarr; 18 &minus; 4 &rarr;</span> <span class="a num">14</span></li>
+      <li>b. <span class="why num">36 &minus; 18 &divide; 3 &times; 2 + 5 &rarr; 36 &minus; 6 &times; 2 + 5
+          &rarr; 36 &minus; 12 + 5 &rarr; 24 + 5 &rarr;</span> <span class="a num">29</span>
+          <br><span class="why">Draco subtracted 36 &minus; 18 first. Parentheses come first, then
+          &times; and &divide; from left to right, and only then + and &minus;.</span>
+          <br><span class="why">Also watch for <b>38</b> (did 3 &times; 2 before 18 &divide; 3, reading
+          PEMDAS as &ldquo;multiply before divide&rdquo;) and <b>19</b> (did 12 + 5 before
+          36 &minus; 12, reading it as &ldquo;add before subtract&rdquo;).</span></li>
+    </ul>
+  </li>
+
+  <li>Zeros in the quotient: <span class="a num">4,839 &divide; 6 = 806 R3</span> &nbsp;&nbsp;
+    <span class="a num">3,248 &divide; 8 = 406</span>
+    <span class="ref">Lessons 3-5 and 3-6, pp. 104&ndash;107</span>
+    <br><span class="why num">Check: 806 &times; 6 + 3 = 4,839 &nbsp; 406 &times; 8 = 3,248</span>
+    <br><span class="why">Watch for 86 R3 and 46: the tens step has a 0 that must be written
+      in the quotient.</span></li>
+
+  <li><span class="a num">$183.15 &divide; 37 = $4.95</span> per present
+    <span class="ref">Lesson 3-13, p. 120</span>
+    <br><span class="why">Place the $ and the decimal point in the quotient first, then divide
+      as usual. Check: 37 &times; $4.95 = $183.15.</span></li>
+
+  <li><span class="num">103 &divide; 4 = 25 R3</span> &rarr; <span class="a num">26 boats</span>
+    (<span class="a">round up</span>) <span class="ref">Lesson 3-3, p. 100</span>
+    <br><span class="why">25 boats leave 3 students on the shore, so they need one more boat.
+      If your child answers 27 because Hagrid rides in a boat of his own (as in the book),
+      that is good reading: accept it if the 26 is in their work.</span></li>
+
+  <li><span class="num">315 &divide; 12 = 26 R3</span> &rarr; <span class="a num">26 batches</span>
+    (<span class="a">round down</span>) <span class="ref">Lesson 3-10, p. 114</span>
+    <br><span class="why">The 3 leftover fangs are not enough for another batch of 12.</span></li>
+
+  <li><span class="num">1,150 &divide; 24 = 47 R22</span>
+    <span class="ref">Lesson 3-11, p. 116</span>
+    <br>a. <span class="a num">47 boxes</span> (<span class="a">round down</span>)
+    &nbsp;&nbsp; b. <span class="a num">22 beans</span> left over
+    <br><span class="why">The 22 leftover beans can't fill a box of 24, so they don't add a box.
+      In part b the remainder itself is the answer.</span></li>
+
+  <li><span class="num">20,000 &divide; 36 = 555 R20</span> &rarr; <span class="a num">556 boxes</span>
+    (<span class="a">round up</span>) <span class="ref">Lesson 3-12, p. 118</span>
+    <br><span class="why">555 boxes is only 19,980 candles, 20 short. He can't buy part of a box,
+      so he needs one more whole box.</span></li>
+</ol>
+</div>
+
+</div>
+
+</body></html>

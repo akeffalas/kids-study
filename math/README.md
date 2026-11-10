@@ -9,6 +9,7 @@ topic.
 | --- | --- | --- |
 | `chapter-1/` | Hyrule Math Quest | Place value, decimals, Roman numerals, properties |
 | `chapter-2/` | Star Fox Math Mission, Star Fox Bonus Mission | Multiplication |
+| `chapter-3/` | Hogwarts Division Review | Division |
 | `grade-3/worksheet/add-large-numbers/` | Pac-Man Addition Maze | Adding four 3-digit numbers |
 
 **Hyrule Math Quest** is a pre-test: Roman numerals, place value to millions,
@@ -21,6 +22,13 @@ digits, money, and a multi-step word problem. **Star Fox Bonus Mission** (3 page
 covers the test's hardest items: the Distributive Property as a strategy,
 choosing mental math or paper and pencil, multipliers ending in zeros, a 4-digit
 by 3-digit product, and cents-only money. Each ends with an answer key.
+
+**Hogwarts Division Review** (5 pages) reviews Chapter 3: division patterns,
+divisibility rules, compatible-number estimates, order of operations, zeros in the
+quotient, dividing money, and four Remainder Riddles where the student decides whether
+the remainder means rounding up or down (one also asks for the leftover itself). Page 5
+is the answer key, which cites the lesson for each question and lists the likely
+wrong answers to watch for.
 
 **Pac-Man Addition Maze** (Grade 3, 2 pages) is six problems adding four 3-digit
 numbers in columns, ramping from no carrying to carries into the thousands, with
@@ -46,13 +54,15 @@ uv run worksheet audit --source other.html
 uv run worksheet --source other.html audit
 ```
 
-Chapter 2 builds the same way, naming its files:
+Chapters 2 and 3 build the same way, naming their files:
 
 ```sh
 uv run worksheet build --source chapter-2/starfox-math-review.html \
                        --output chapter-2/StarFox-Math-Mission.pdf
 uv run worksheet build --source chapter-2/starfox-bonus-mission.html \
                        --output chapter-2/StarFox-Bonus-Mission.pdf
+uv run worksheet build --source chapter-3/hogwarts-math-review.html \
+                       --output chapter-3/Hogwarts-Division-Review.pdf
 ```
 
 The Pac-Man sheet is generated: `generate.py` holds the problems, computes every
@@ -64,19 +74,20 @@ uv run worksheet build --source grade-3/worksheet/add-large-numbers/pacman-addit
                        --output grade-3/worksheet/add-large-numbers/PacMan-Addition-Maze.pdf
 ```
 
-The audit gates are not wired to it: like chapter 2, it would fail chapter 1's
+The audit gates are not wired to it: like chapters 2 and 3, it would fail chapter 1's
 content and page-count checks. Its answer key cannot drift from its problems,
 because both are produced from the same numbers by the same run.
 
-### What the gates cover for chapter 2
+### What the gates cover for chapters 2 and 3
 
 The print gates (tokens, binding, contrast, artwork) apply to any worksheet and
-pass for both Star Fox sheets. The correctness gates do not yet: `content.py`
-derives chapter 1's answers only, so auditing a chapter 2 sheet reports every
-Hyrule given and answer as missing, and the page-count gate expects chapter 1's
-four pages (the bonus sheet has three). The Star Fox answer keys were checked by
-hand against computed values when written, and nothing re-checks them after an
-edit. Bringing them under the gates means per-worksheet content and page counts.
+pass for both Star Fox sheets and the Hogwarts sheet. The correctness gates do not
+yet: `content.py` derives chapter 1's answers only, so auditing a chapter 2 or 3
+sheet reports every Hyrule given and answer as missing, and the page-count gate
+expects chapter 1's four pages (the Star Fox bonus sheet has three, the Hogwarts
+sheet five). The Star Fox and Hogwarts answer keys were checked against computed
+values when written, and nothing re-checks them after an edit. Bringing them under
+the gates means per-worksheet content and page counts.
 
 ## Why the gates exist
 
@@ -166,6 +177,9 @@ chapter-2/
   StarFox-Math-Mission.pdf
   starfox-bonus-mission.html  bonus worksheet
   StarFox-Bonus-Mission.pdf
+chapter-3/
+  hogwarts-math-review.html   the worksheet (source of truth)
+  Hogwarts-Division-Review.pdf
 grade-3/worksheet/add-large-numbers/
   generate.py                 the problems and answers (source of truth)
   pacman-addition-maze.html   generated, do not edit
